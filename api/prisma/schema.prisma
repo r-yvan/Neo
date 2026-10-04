@@ -1,0 +1,427 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  RENTER
+  OWNER
+  ADMIN
+}
+
+enum EquipmentCategory {
+  CHAIRS
+  TABLES
+  TENTS
+  SPEAKERS
+  LIGHTS
+  COOLERS
+  GENERATORS
+  DECORATIONS
+  OTHER
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  ONGOING
+  COMPLETED
+  DISPUTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum TransactionType {
+  COMMISSION
+  PAYOUT
+  BOOST
+  RENTAL
+  WITHDRAWAL
+  REFUND
+}
+
+enum NotificationType {
+  BOOKING
+  PAYMENT
+  CHAT
+  REVIEW
+  SYSTEM
+  DISPUTE
+}
+
+enum ReportTargetType {
+  USER
+  EQUIPMENT
+  REVIEW
+  MESSAGE
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+enum DisputeStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model User {
+  id            String     @id @default(uuid())
+  phone         String     @unique
+  fullName      String
+  nationalId    String?    @unique
+  email         String?    @unique
+  passwordHash  String?
+  roles         UserRole[] @default([RENTER])
+  isVerified    Boolean    @default(false)
+  isBanned      Boolean    @default(false)
+  profileImage  String?
+  averageRating Float      @default(0)
+  totalReviews  Int        @default(0)
+  deletedAt     DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  refreshTokens       RefreshToken[]
+  equipment           Equipment[]
+  bookingsAsRenter    Booking[]              @relation("RenterBookings")
+  bookingsAsOwner     Booking[]              @relation("OwnerBookings")
+  reviewsGiven        Review[]               @relation("ReviewsGiven")
+  reviewsReceived     Review[]               @relation("ReviewsReceived")
+  sentMessages        Message[]              @relation("SentMessages")
+  receivedMessages    Message[]              @relation("ReceivedMessages")
+  notifications       Notification[]
+  transactions        Transaction[]
+  favorites           Favorite[]
+  reportsFiled        Report[]               @relation("ReportsFiled")
+  disputesOpened      Dispute[]              @relation("DisputesOpened")
+  notificationSetting NotificationSetting?
+  withdrawals         Withdrawal[]
+  bookingTimelines    BookingTimeline[]
+
+  @@index([phone])
+  @@index([fullName])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model OtpCode {
+  id        String   @id @default(uuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone, code])
+  @@map("otp_codes")
+}
+
+model Equipment {
+  id            String            @id @default(uuid())
+  ownerId       String
+  title         String
+  description   String?
+  category      EquipmentCategory
+  quantity      Int
+  pricePerDay   Decimal           @db.Decimal(12, 2)
+  depositAmount Decimal?          @db.Decimal(12, 2)
+  location      String
+  latitude      Float?
+  longitude     Float?
+  images        String[]
+  isAvailable   Boolean           @default(true)
+  isApproved    Boolean           @default(true)
+  isBoosted     Boolean           @default(false)
+  boostedUntil  DateTime?
+  averageRating Float             @default(0)
+  totalReviews  Int               @default(0)
+  deletedAt     DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  owner         User           @relation(fields: [ownerId], references: [id])
+  availability  Availability[]
+  bookings      Booking[]
+  reviews       Review[]
+  favorites     Favorite[]
+
+  @@index([ownerId])
+  @@index([category])
+  @@index([location])
+  @@index([isBoosted, boostedUntil])
+  @@index([deletedAt])
+  @@map("equipment")
+}
+
+model Availability {
+  id          String   @id @default(uuid())
+  equipmentId String
+  date        DateTime @db.Date
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@unique([equipmentId, date])
+  @@index([equipmentId])
+  @@map("availability")
+}
+
+model Booking {
+  id               String        @id @default(uuid())
+  equipmentId      String
+  renterId         String
+  ownerId          String
+  startDate        DateTime      @db.Date
+  endDate          DateTime      @db.Date
+  quantity         Int
+  totalPrice       Decimal       @db.Decimal(12, 2)
+  commissionAmount Decimal       @db.Decimal(12, 2)
+  depositAmount    Decimal       @default(0) @db.Decimal(12, 2)
+  status           BookingStatus @default(PENDING)
+  paymentStatus    PaymentStatus @default(PENDING)
+  notes            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  equipment  Equipment         @relation(fields: [equipmentId], references: [id])
+  renter     User              @relation("RenterBookings", fields: [renterId], references: [id])
+  owner      User              @relation("OwnerBookings", fields: [ownerId], references: [id])
+  review     Review?
+  messages   Message[]
+  timeline   BookingTimeline[]
+  transactions Transaction[]
+  dispute    Dispute?
+
+  @@index([renterId])
+  @@index([ownerId])
+  @@index([equipmentId])
+  @@index([status])
+  @@map("bookings")
+}
+
+model BookingTimeline {
+  id        String         @id @default(uuid())
+  bookingId String
+  status    BookingStatus
+  note      String?
+  actorId   String?
+  createdAt DateTime       @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  actor   User?   @relation(fields: [actorId], references: [id])
+
+  @@index([bookingId])
+  @@map("booking_timelines")
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  bookingId   String   @unique
+  fromUserId  String
+  toUserId    String
+  equipmentId String?
+  rating      Int
+  comment     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  booking   Booking    @relation(fields: [bookingId], references: [id])
+  fromUser  User       @relation("ReviewsGiven", fields: [fromUserId], references: [id])
+  toUser    User       @relation("ReviewsReceived", fields: [toUserId], references: [id])
+  equipment Equipment? @relation(fields: [equipmentId], references: [id])
+
+  @@index([toUserId])
+  @@index([equipmentId])
+  @@map("reviews")
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  bookingId  String?
+  senderId   String
+  receiverId String
+  content    String
+  isRead     Boolean  @default(false)
+  deletedAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  booking  Booking? @relation(fields: [bookingId], references: [id])
+  sender   User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@index([senderId, receiverId])
+  @@index([receiverId, isRead])
+  @@map("messages")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  title     String
+  body      String
+  type      NotificationType
+  isRead    Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model NotificationSetting {
+  id               String  @id @default(uuid())
+  userId           String  @unique
+  bookingAlerts    Boolean @default(true)
+  paymentAlerts    Boolean @default(true)
+  chatAlerts       Boolean @default(true)
+  marketingAlerts  Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_settings")
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  bookingId   String?
+  userId      String
+  amount      Decimal         @db.Decimal(12, 2)
+  type        TransactionType
+  provider    String?
+  providerRef String?
+  status      PaymentStatus   @default(PENDING)
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([bookingId])
+  @@map("transactions")
+}
+
+model Withdrawal {
+  id        String           @id @default(uuid())
+  userId    String
+  amount    Decimal          @db.Decimal(12, 2)
+  phone     String
+  provider  String
+  status    WithdrawalStatus @default(PENDING)
+  note      String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("withdrawals")
+}
+
+model Favorite {
+  id          String   @id @default(uuid())
+  userId      String
+  equipmentId String
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, equipmentId])
+  @@map("favorites")
+}
+
+model Report {
+  id         String           @id @default(uuid())
+  reporterId String
+  targetType ReportTargetType
+  targetId   String
+  reason     String
+  details    String?
+  status     ReportStatus     @default(OPEN)
+  resolvedAt DateTime?
+  createdAt  DateTime         @default(now())
+
+  reporter User @relation("ReportsFiled", fields: [reporterId], references: [id])
+
+  @@index([status])
+  @@map("reports")
+}
+
+model Dispute {
+  id         String        @id @default(uuid())
+  bookingId  String        @unique
+  openedById String
+  reason     String
+  response   String?
+  status     DisputeStatus @default(OPEN)
+  resolution String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  booking  Booking @relation(fields: [bookingId], references: [id])
+  openedBy User    @relation("DisputesOpened", fields: [openedById], references: [id])
+
+  @@map("disputes")
+}
+
+model Location {
+  id        String   @id @default(uuid())
+  province  String
+  district  String
+  sector    String
+  cell      String?
+  createdAt DateTime @default(now())
+
+  @@index([district, sector])
+  @@map("locations")
+}
+
+model AppConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("app_configs")
+}
