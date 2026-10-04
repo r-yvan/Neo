@@ -324,6 +324,6 @@ export class PaymentsService {
     }
 
     const result = await this.markRentalPaid(transaction.id);
-    return { message: 'Webhook processed', ...result };
+    return { ...result, webhookStatus: 'processed' };
   }
 }

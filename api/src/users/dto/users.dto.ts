@@ -44,7 +44,7 @@ export class VerifyNationalIdDto {
 export class AddRoleDto {
   @ApiProperty({ enum: [UserRole.OWNER, UserRole.RENTER] })
   @IsEnum(UserRole)
-  role: UserRole.OWNER | UserRole.RENTER;
+  role: UserRole;
 }
 
 export class UploadAvatarDto {

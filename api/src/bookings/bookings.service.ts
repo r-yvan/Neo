@@ -402,7 +402,7 @@ export class BookingsService {
       throw new ForbiddenException('You cannot extend this booking');
     }
     if (
-      ![BookingStatus.ACCEPTED, BookingStatus.ONGOING].includes(booking.status)
+      !([BookingStatus.ACCEPTED, BookingStatus.ONGOING] as BookingStatus[]).includes(booking.status)
     ) {
       throw new BadRequestException(
         'Only accepted or ongoing bookings can be extended',
