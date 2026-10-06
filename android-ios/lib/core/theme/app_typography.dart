@@ -5,7 +5,9 @@ import 'app_colors.dart';
 /// Satoshi is bundled with the app (see `pubspec.yaml`). No system-font
 /// fallback is permitted: [kFontFamily] is applied through [ThemeData], and
 /// every text style in the app derives from this file.
-const String kFontFamily = 'Satoshi';
+///
+/// TEMPORARILY changed to system font until Satoshi font files are added.
+const String kFontFamily = 'Roboto';
 
 /// Named weights so call sites read declaratively instead of repeating ints.
 abstract final class AppFontWeight {

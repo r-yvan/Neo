@@ -1,146 +1,124 @@
-import '../models/booking_model.dart';
-import '../models/paginated_response.dart';
-import '../services/api_client.dart';
-import '../../core/errors/exceptions.dart';
+import '../../core/network/api_paths.dart';
+import '../../core/utils/parsing.dart' show isoDate;
+import '../models/models.dart';
+import 'users_repository.dart';
 
 class BookingRepository {
-  final ApiClient _apiClient;
+  BookingRepository(this._get, this._post, this._patch);
 
-  BookingRepository(this._apiClient);
+  final Future<dynamic> Function(String path,
+      {Map<String, dynamic>? query, bool skipAuth}) _get;
+  final Future<dynamic> Function(String path, {Object? body}) _post;
+  final Future<dynamic> Function(String path, {Object? body}) _patch;
 
-  Future<BookingModel> createBooking(Map<String, dynamic> data) async {
-    try {
-      final response = await _apiClient.post(
-        '/bookings',
-        data: data,
-      );
-      return BookingModel.fromJson(response.data);
-    } on ServerException catch (e) {
-      throw ServerException(e.message, e.statusCode);
-    } on NetworkException catch (e) {
-      throw NetworkException(e.message);
-    }
-  }
+  /// Pricing is computed server-side. The client previews the same formula so
+  /// the summary screen can respond instantly; the booking response is
+  /// authoritative.
+  Future<Booking> create({
+    required String equipmentId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required int quantity,
+    String? notes,
+  }) async =>
+      Booking.fromJson(asMap(await _post(ApiPaths.bookings, body: {
+        'equipmentId': equipmentId,
+        'startDate': isoDate(startDate),
+        'endDate': isoDate(endDate),
+        'quantity': quantity,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+      })));
 
-  Future<PaginatedResponse<BookingModel>> getMyBookings({
-    String? role,
-    String? status,
+  Future<PaginatedList<Booking>> mine({
+    BookingRole? role,
+    BookingStatus? status,
     int page = 1,
     int limit = 20,
   }) async {
-    try {
-      final queryParams = <String, dynamic>{
-        'page': page,
-        'limit': limit,
-      };
-
-      if (role != null) queryParams['role'] = role;
-      if (status != null) queryParams['status'] = status;
-
-      final response = await _apiClient.get(
-        '/bookings',
-        queryParameters: queryParams,
-      );
-
-      return PaginatedResponse.fromJson(
-        response.data,
-        (json) => BookingModel.fromJson(json as Map<String, dynamic>),
-      );
-    } on ServerException catch (e) {
-      throw ServerException(e.message, e.statusCode);
-    } on NetworkException catch (e) {
-      throw NetworkException(e.message);
-    }
+    final String path = switch (role) {
+      BookingRole.renter => ApiPaths.bookingsRenter,
+      BookingRole.owner => ApiPaths.bookingsOwner,
+      null => ApiPaths.bookings,
+    };
+    return _page(await _get(path, query: {
+      'page': page,
+      'limit': limit,
+      if (role != null) 'role': role.wire,
+      if (status != null) 'status': status.wire,
+    }));
   }
 
-  Future<BookingModel> getBookingById(String id) async {
-    try {
-      final response = await _apiClient.get('/bookings/$id');
-      return BookingModel.fromJson(response.data);
-    } on ServerException catch (e) {
-      throw ServerException(e.message, e.statusCode);
-    } on NetworkException catch (e) {
-      throw NetworkException(e.message);
-    }
+  Future<Booking> byId(String id) async =>
+      Booking.fromJson(asMap(await _get(ApiPaths.booking(id))));
+
+  Future<List<BookingTimelineEntry>> timeline(String id) async {
+    final dynamic res = await _get(ApiPaths.bookingTimeline(id));
+    return asMapList(res).map(BookingTimelineEntry.fromJson).toList();
   }
 
-  Future<BookingModel> acceptBooking(String id) async {
-    try {
-      final response = await _apiClient.patch('/bookings/$id/accept');
-      return BookingModel.fromJson(response.data);
-    } on ServerException catch (e) {
-      throw ServerException(e.message, e.statusCode);
-    } on NetworkException catch (e) {
-      throw NetworkException(e.message);
-    }
+  Future<Booking> accept(String id) async =>
+      Booking.fromJson(asMap(await _patch(ApiPaths.bookingAccept(id))));
+
+  Future<Booking> reject(String id) async =>
+      Booking.fromJson(asMap(await _patch(ApiPaths.bookingReject(id))));
+
+  Future<Booking> cancel(String id) async =>
+      Booking.fromJson(asMap(await _patch(ApiPaths.bookingCancel(id))));
+
+  Future<Booking> start(String id) async =>
+      Booking.fromJson(asMap(await _patch(ApiPaths.bookingStart(id))));
+
+  Future<Booking> complete(String id) async =>
+      Booking.fromJson(asMap(await _patch(ApiPaths.bookingComplete(id))));
+
+  Future<Booking> markDisputed(String id) async =>
+      Booking.fromJson(asMap(await _patch(ApiPaths.bookingDispute(id))));
+
+  /// Re-prices the booking against the equipment's current daily rate.
+  Future<Booking> extend(String id, DateTime newEndDate) async =>
+      Booking.fromJson(asMap(await _post(ApiPaths.bookingExtend(id),
+          body: {'newEndDate': isoDate(newEndDate)})));
+
+  /// Client-side mirror of `BookingsService.rentalDays`.
+  static int rentalDays(DateTime start, DateTime end) {
+    final DateTime a = DateTime(start.year, start.month, start.day);
+    final DateTime b = DateTime(end.year, end.month, end.day);
+    final int days = b.difference(a).inDays + 1;
+    return days < 1 ? 1 : days;
   }
 
-  Future<BookingModel> rejectBooking(String id) async {
-    try {
-      final response = await _apiClient.patch('/bookings/$id/reject');
-      return BookingModel.fromJson(response.data);
-    } on ServerException catch (e) {
-      throw ServerException(e.message, e.statusCode);
-    } on NetworkException catch (e) {
-      throw NetworkException(e.message);
-    }
+  /// Client-side mirror of `calcPricing` + the 10% platform commission.
+  static ({double total, double commission, double deposit}) preview({
+    required double pricePerDay,
+    required double? depositAmount,
+    required DateTime startDate,
+    required DateTime endDate,
+    required int quantity,
+    double commissionRate = 0.10,
+  }) {
+    final int days = rentalDays(startDate, endDate);
+    final double total = days * pricePerDay * quantity;
+    return (
+      total: total,
+      commission: total * commissionRate,
+      deposit: depositAmount ?? 0,
+    );
   }
+}
 
-  Future<BookingModel> cancelBooking(String id) async {
-    try {
-      final response = await _apiClient.patch('/bookings/$id/cancel');
-      return BookingModel.fromJson(response.data);
-    } on ServerException catch (e) {
-      throw ServerException(e.message, e.statusCode);
-    } on NetworkException catch (e) {
-      throw NetworkException(e.message);
-    }
-  }
+enum BookingRole {
+  renter('renter', 'I am renting'),
+  owner('owner', 'I own the item');
 
-  Future<BookingModel> startBooking(String id) async {
-    try {
-      final response = await _apiClient.patch('/bookings/$id/start');
-      return BookingModel.fromJson(response.data);
-    } on ServerException catch (e) {
-      throw ServerException(e.message, e.statusCode);
-    } on NetworkException catch (e) {
-      throw NetworkException(e.message);
-    }
-  }
+  const BookingRole(this.wire, this.label);
+  final String wire;
+  final String label;
+}
 
-  Future<BookingModel> completeBooking(String id) async {
-    try {
-      final response = await _apiClient.patch('/bookings/$id/complete');
-      return BookingModel.fromJson(response.data);
-    } on ServerException catch (e) {
-      throw ServerException(e.message, e.statusCode);
-    } on NetworkException catch (e) {
-      throw NetworkException(e.message);
-    }
-  }
-
-  Future<BookingModel> disputeBooking(String id) async {
-    try {
-      final response = await _apiClient.patch('/bookings/$id/dispute');
-      return BookingModel.fromJson(response.data);
-    } on ServerException catch (e) {
-      throw ServerException(e.message, e.statusCode);
-    } on NetworkException catch (e) {
-      throw NetworkException(e.message);
-    }
-  }
-
-  Future<BookingModel> extendBooking(String id, String newEndDate) async {
-    try {
-      final response = await _apiClient.post(
-        '/bookings/$id/extend',
-        data: {'newEndDate': newEndDate},
-      );
-      return BookingModel.fromJson(response.data);
-    } on ServerException catch (e) {
-      throw ServerException(e.message, e.statusCode);
-    } on NetworkException catch (e) {
-      throw NetworkException(e.message);
-    }
-  }
+PaginatedList<Booking> _page(dynamic res) {
+  final Map<String, dynamic> map = asMap(res);
+  return PaginatedList<Booking>(
+    items: asMapList(map['data']).map(Booking.fromJson).toList(),
+    meta: asMap(map['meta']),
+  );
 }

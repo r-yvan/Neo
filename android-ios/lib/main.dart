@@ -1,38 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'core/config/app_config.dart';
-import 'core/theme/app_theme.dart';
-import 'presentation/pages/splash/splash_page.dart';
+import 'package:flutter/services.dart';
 
-void main() async {
+import 'app.dart';
+import 'core/storage/app_preferences.dart';
+import 'core/storage/token_store.dart';
+import 'data/providers.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive
-  await Hive.initFlutter();
-  await Hive.openBox('authBox');
-  await Hive.openBox('userBox');
-  await Hive.openBox('settingsBox');
+  // Lock to portrait: booking, payment and chat flows are single-column, and
+  // the owner dashboard tables do not reflow usefully in landscape.
+  await SystemChrome.setPreferredOrientations(<DeviceOrientation>[
+    DeviceOrientation.portraitUp,
+  ]);
+
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    systemNavigationBarColor: Colors.transparent,
+  ));
+
+  final AppPreferences preferences = await AppPreferences.load();
+  final TokenStore tokens = TokenStore();
+  await tokens.read();
 
   runApp(
-    const ProviderScope(
-      child: EventNeoApp(),
+    ProviderScope(
+      overrides: <Override>[
+        appPreferencesProvider.overrideWithValue(preferences),
+        tokenStoreProvider.overrideWithValue(tokens),
+      ],
+      child: const NeoApp(),
     ),
   );
-}
-
-class EventNeoApp extends ConsumerWidget {
-  const EventNeoApp({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return MaterialApp(
-      title: 'EventNeo',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      home: const SplashPage(),
-    );
-  }
 }
