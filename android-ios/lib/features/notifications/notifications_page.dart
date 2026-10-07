@@ -8,6 +8,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/users_repository.dart' show PaginatedList;
 import '../bookings/booking_detail_page.dart';
 import 'notification_settings_page.dart';
 
@@ -44,8 +45,8 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       final NotificationsRepository repo =
           ref.read(notificationsRepositoryProvider);
       final PaginatedList<AppNotification> page = widget.unreadOnly
-          ? await repo.unread()
-          : await repo.list();
+          ? await repo.unread(page: 1)
+          : await repo.list(page: 1);
       if (!mounted) return;
       setState(() {
         _items = page.items;
@@ -177,7 +178,8 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
           onRefresh: _load,
           child: NotificationListener<ScrollNotification>(
             onNotification: (ScrollNotification n) {
-              if (n.metrics.pixels > n.metrics.maxScrollExtent - 400) _loadMore();
+              if (n.metrics.pixels > n.metrics.maxScrollExtent - 400)
+                _loadMore();
               return false;
             },
             child: _loading && _items.isEmpty
@@ -228,7 +230,10 @@ class _NotificationTile extends StatelessWidget {
       NotificationType.chat => (Icons.chat_bubble_rounded, BadgeTone.accent),
       NotificationType.review => (Icons.star_rounded, BadgeTone.warning),
       NotificationType.dispute => (Icons.gavel_rounded, BadgeTone.danger),
-      NotificationType.system => (Icons.info_outline_rounded, BadgeTone.neutral),
+      NotificationType.system => (
+          Icons.info_outline_rounded,
+          BadgeTone.neutral
+        ),
     };
 
     return Padding(
@@ -289,7 +294,8 @@ class _NotificationTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(item.body, style: theme.textTheme.bodySmall),
                   const SizedBox(height: 4),
-                  Text(Dates.relative(item.createdAt), style: theme.textTheme.bodySmall),
+                  Text(Dates.relative(item.createdAt),
+                      style: theme.textTheme.bodySmall),
                 ],
               ),
             ),

@@ -8,8 +8,7 @@ import '../../core/utils/validators.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
-import 'login_page.dart';
-import 'otp_page.dart';
+import 'login_page.dart' show NeoErrorBanner;
 
 /// Six-digit code entry shared by sign-in, phone verification and password
 /// reset. [onVerify] receives the code; the page pops itself on success.
@@ -94,7 +93,8 @@ class _OtpPageState extends ConsumerState<OtpPage> {
       final OtpDispatch dispatch =
           await ref.read(sessionProvider.notifier).sendOtp(widget.phone);
       if (mounted) {
-        showNeoSnack(context, 'A new code has been sent', icon: Icons.sms_rounded);
+        showNeoSnack(context, 'A new code has been sent',
+            icon: Icons.sms_rounded);
         setState(() {});
         // Re-nudge the countdown by rebuilding with a fresh dispatch.
         _latest = dispatch;
@@ -136,9 +136,11 @@ class _OtpPageState extends ConsumerState<OtpPage> {
               const SizedBox(height: AppSpacing.lg),
               OtpNotice(phone: widget.phone, dispatch: dispatch),
               const SizedBox(height: AppSpacing.xl),
-              OtpInput(controller: _code, onCompleted: (_) {
-                if (!_busy) _verify();
-              }),
+              OtpInput(
+                  controller: _code,
+                  onCompleted: (_) {
+                    if (!_busy) _verify();
+                  }),
               if (_error != null) ...[
                 const SizedBox(height: AppSpacing.md),
                 NeoErrorBanner(message: _error!),

@@ -44,18 +44,20 @@ class UsersRepository {
   Future<AppUser> addRole(UserRole role) async => AppUser.fromJson(
       asMap(await _patch(ApiPaths.usersMeRole, body: {'role': role.wire})));
 
-  Future<AppUser> submitNationalId(String nationalId) async => AppUser.fromJson(
-      asMap(await _post(ApiPaths.usersMeVerifyNationalId,
+  Future<AppUser> submitNationalId(String nationalId) async =>
+      AppUser.fromJson(asMap(await _post(ApiPaths.usersMeVerifyNationalId,
           body: {'nationalId': nationalId})));
 
   Future<PublicProfile> profile(String id) async =>
       PublicProfile.fromJson(asMap(await _get(ApiPaths.user(id))));
 
-  Future<PaginatedList<Review>> reviews(String id, {int page = 1, int limit = 20}) async =>
+  Future<PaginatedList<Review>> reviews(String id,
+          {int page = 1, int limit = 20}) async =>
       _reviewPage(await _get(ApiPaths.userReviews(id),
           query: {'page': page, 'limit': limit}));
 
-  Future<List<Equipment>> equipment(String id, {int page = 1, int limit = 20}) async {
+  Future<List<Equipment>> equipment(String id,
+      {int page = 1, int limit = 20}) async {
     final dynamic res = await _get(ApiPaths.userEquipment(id),
         query: {'page': page, 'limit': limit});
     return asMapList(asMap(res)['data'])
@@ -71,9 +73,7 @@ class UsersRepository {
       if (term != null && term.isNotEmpty) 'search': term,
     });
     return PaginatedList<PublicProfile>(
-      items: asMapList(asMap(res)['data'])
-          .map(PublicProfile.fromJson)
-          .toList(),
+      items: asMapList(asMap(res)['data']).map(PublicProfile.fromJson).toList(),
       meta: asMap(asMap(res)['meta']),
     );
   }
@@ -91,6 +91,13 @@ class PaginatedList<T> {
   int get length => items.length;
   bool get isEmpty => items.isEmpty;
   bool get isNotEmpty => items.isNotEmpty;
+
+  PaginatedList<T> merge(PaginatedList<T> other) {
+    return PaginatedList<T>(
+      items: [...items, ...other.items],
+      meta: other.meta,
+    );
+  }
 }
 
 PaginatedList<Review> _reviewPage(dynamic res) {

@@ -6,6 +6,7 @@ import '../../core/network/api_exception.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/providers.dart';
+import 'login_page.dart' show NeoErrorBanner;
 import 'otp_page.dart';
 
 /// Two-step password reset: request an OTP, then set a new password.
@@ -40,8 +41,9 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
       _neutralMessage = null;
     });
     try {
-      final String message =
-          await ref.read(authRepositoryProvider).forgotPassword(_phone.text.trim());
+      final String message = await ref
+          .read(authRepositoryProvider)
+          .forgotPassword(_phone.text.trim());
       if (!mounted) return;
       setState(() => _busy = false);
       await Navigator.of(context).push<void>(

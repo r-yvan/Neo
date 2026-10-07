@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/providers.dart';
+import 'login_page.dart' show NeoErrorBanner;
 import 'otp_page.dart';
 
 /// Registration. `POST /auth/register` creates the account with the RENTER
@@ -57,7 +58,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           );
       if (mounted) {
         // Registered and signed in — the router redirects to /home.
-        showNeoSnack(context, 'Welcome to Neo, ${_name.text.trim().split(' ').first}!');
+        showNeoSnack(
+            context, 'Welcome to Neo, ${_name.text.trim().split(' ').first}!');
       }
     } on ApiException catch (e) {
       setState(() => _error = e.message);
@@ -139,8 +141,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(16),
                   ],
-                  validator: (String? v) =>
-                      (v ?? '').trim().isEmpty ? null : Validators.nationalId(v),
+                  validator: (String? v) => (v ?? '').trim().isEmpty
+                      ? null
+                      : Validators.nationalId(v),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 NeoField(
@@ -150,7 +153,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   obscure: _obscure,
                   prefixIcon: Icons.lock_outline_rounded,
                   textInputAction: TextInputAction.done,
-                  validator: (String? v) => Validators.password(v, required: false),
+                  validator: (String? v) =>
+                      Validators.password(v, required: false),
                   suffix: IconButton(
                     icon: Icon(
                       _obscure

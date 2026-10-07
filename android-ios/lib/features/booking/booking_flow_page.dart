@@ -13,7 +13,9 @@ import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/booking_repository.dart';
+import '../auth/login_page.dart' show NeoErrorBanner;
 import '../chat/chat_page.dart';
+import '../equipment/widgets/equipment_card.dart' show equipmentCategoryIcon;
 
 /// End-to-end rental flow in a single scrollable page:
 ///
@@ -107,14 +109,13 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
       _error = null;
     });
     try {
-      final Booking booking =
-          await ref.read(bookingRepositoryProvider).create(
-                equipmentId: widget.equipment.id,
-                startDate: _start,
-                endDate: _end,
-                quantity: _quantity,
-                notes: _notes.text.trim(),
-              );
+      final Booking booking = await ref.read(bookingRepositoryProvider).create(
+            equipmentId: widget.equipment.id,
+            startDate: _start,
+            endDate: _end,
+            quantity: _quantity,
+            notes: _notes.text.trim(),
+          );
       if (!mounted) return;
       setState(() {
         _booking = booking;
@@ -251,16 +252,11 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
             daysOfWeekHeight: 30,
             rangeStartDay: _start,
             rangeEndDay: _end,
-            rangeSelectionColor: AppColors.accentSoft,
             startingDayOfWeek: StartingDayOfWeek.monday,
             availableCalendarFormats: const <CalendarFormat>[],
             calendarStyle: CalendarStyle(
               outsideDaysVisible: false,
               rangeHighlightColor: AppColors.accent,
-              rangeOverlayDecoration: BoxDecoration(
-                color: AppColors.accentSoft,
-                borderRadius: AppRadii.smAll,
-              ),
               todayDecoration: BoxDecoration(
                 color: AppColors.accent.withValues(alpha: 0.14),
                 shape: BoxShape.circle,
@@ -304,14 +300,16 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            onRangeSelected: (DateTime? start, DateTime? end, DateTime focused) {
+            onRangeSelected:
+                (DateTime? start, DateTime? end, DateTime focused) {
               if (start == null) return;
               final DateTime resolvedEnd = end ?? start;
               final List<DateTime> span =
                   Dates.rangeInclusive(start, resolvedEnd);
               if (span.any((DateTime d) =>
                   blocked.any((DateTime b) => Dates.isSameDay(b, d)))) {
-                setState(() => _error = 'That range includes an unavailable day');
+                setState(
+                    () => _error = 'That range includes an unavailable day');
                 return;
               }
               setState(() {
@@ -327,7 +325,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
           const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
-              const Icon(Icons.event_busy_rounded, size: 15, color: AppColors.grey400),
+              const Icon(Icons.event_busy_rounded,
+                  size: 15, color: AppColors.grey400),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -353,7 +352,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
 
   Widget _quantityStep(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final ({double total, double commission, double deposit}) preview = _preview;
+    final ({double total, double commission, double deposit}) preview =
+        _preview;
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -368,7 +368,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
               Row(
                 children: [
                   Expanded(
-                    child: Text('Units needed', style: theme.textTheme.titleMedium),
+                    child: Text('Units needed',
+                        style: theme.textTheme.titleMedium),
                   ),
                   Row(
                     children: [
@@ -383,7 +384,10 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
                         child: Text(
                           '$_quantity',
                           textAlign: TextAlign.center,
-                          style: theme.textStyle.numeric,
+                          style: theme.textTheme.displayLarge?.copyWith(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       _StepperButton(
@@ -412,7 +416,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
           child: Column(
             children: [
               DetailRow(
-                label: '${Money.format(widget.equipment.pricePerDay)} × $_quantity units × $_days days',
+                label:
+                    '${Money.format(widget.equipment.pricePerDay)} × $_quantity units × $_days days',
                 value: Money.format(preview.total),
               ),
               const Divider(height: AppSpacing.md),
@@ -432,7 +437,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
 
   Widget _summaryStep(BuildContext context, AppUser? me, bool isOwnListing) {
     final ThemeData theme = Theme.of(context);
-    final ({double total, double commission, double deposit}) preview = _preview;
+    final ({double total, double commission, double deposit}) preview =
+        _preview;
     final Booking? booking = _booking;
 
     if (isOwnListing) {
@@ -464,7 +470,7 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
                 equipmentCategoryIcon(widget.equipment.category),
                 widget.equipment.title,
                 '${_quantity} unit${_quantity == 1 ? '' : 's'} · '
-                    '${widget.equipment.location}',
+                '${widget.equipment.location}',
               ),
               const Divider(height: AppSpacing.lg),
               Row(
@@ -484,7 +490,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
                 children: [
                   const Icon(Icons.schedule_rounded, size: 16),
                   const SizedBox(width: AppSpacing.xs),
-                  Text('$_days day${_days == 1 ? '' : 's'}', style: theme.textTheme.bodyMedium),
+                  Text('$_days day${_days == 1 ? '' : 's'}',
+                      style: theme.textTheme.bodyMedium),
                 ],
               ),
             ],
@@ -523,7 +530,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.info_outline_rounded, size: 16, color: AppColors.grey500),
+              const Icon(Icons.info_outline_rounded,
+                  size: 16, color: AppColors.grey500),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
@@ -615,7 +623,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
           NeoEmptyState(
             icon: Icons.receipt_long_outlined,
             title: 'No request yet',
-            message: 'Go back to the summary and send your booking request first.',
+            message:
+                'Go back to the summary and send your booking request first.',
           ),
         ],
       );
@@ -636,7 +645,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
             border: true,
             child: Column(
               children: [
-                const Icon(Icons.verified_rounded, size: 44, color: AppColors.success),
+                const Icon(Icons.verified_rounded,
+                    size: 44, color: AppColors.success),
                 const SizedBox(height: AppSpacing.sm),
                 Text('Payment complete', style: theme.textTheme.headlineMedium),
                 const SizedBox(height: AppSpacing.xxs),
@@ -656,7 +666,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.hourglass_top_rounded, size: 18, color: AppColors.warning),
+                    const Icon(Icons.hourglass_top_rounded,
+                        size: 18, color: AppColors.warning),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
                       'Waiting for the owner',
@@ -683,7 +694,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
         else ...[
           Text('Amount due', style: theme.textTheme.titleSmall),
           const SizedBox(height: AppSpacing.xxs),
-          Text(Money.format(booking.totalPrice), style: theme.textTheme.displayMedium),
+          Text(Money.format(booking.totalPrice),
+              style: theme.textTheme.displayMedium),
           const SizedBox(height: AppSpacing.lg),
           Text('Pay with', style: theme.textTheme.titleSmall),
           const SizedBox(height: AppSpacing.xs),
@@ -766,7 +778,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
           color: theme.colorScheme.surface,
           border: Border(top: BorderSide(color: theme.colorScheme.outline)),
         ),
-        child: NeoButton(label: 'Close', onPressed: () => Navigator.of(context).pop()),
+        child: NeoButton(
+            label: 'Close', onPressed: () => Navigator.of(context).pop()),
       );
     }
 
@@ -799,7 +812,9 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
             child: NeoButton(
               label: canAdvance
                   ? 'Continue'
-                  : (_booking == null ? 'Send booking request' : 'Continue to payment'),
+                  : (_booking == null
+                      ? 'Send booking request'
+                      : 'Continue to payment'),
               loading: _busy,
               icon: _booking != null && !canAdvance
                   ? Icons.arrow_forward_rounded
@@ -872,11 +887,14 @@ class _StepBar extends StatelessWidget {
             ),
             child: Center(
               child: index < current
-                  ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
+                  ? const Icon(Icons.check_rounded,
+                      size: 14, color: Colors.white)
                   : Text(
                       '${index + 1}',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: active ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                        color: active
+                            ? Colors.white
+                            : theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
             ),
@@ -897,7 +915,9 @@ class _StepperButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     return Material(
-      color: onPressed == null ? theme.colorScheme.surfaceContainerHigh : AppColors.accentSoft,
+      color: onPressed == null
+          ? theme.colorScheme.surfaceContainerHigh
+          : AppColors.accentSoft,
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),

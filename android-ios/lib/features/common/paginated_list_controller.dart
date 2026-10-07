@@ -11,7 +11,8 @@ import '../../../data/repositories/users_repository.dart';
 /// Kept as a plain [Notifier] (no codegen) so the whole lifecycle is readable
 /// in one file.
 class PaginatedListController<T> extends Notifier<PaginatedList<T>> {
-  PaginatedListController(this._fetch, {this.pageSize = 20, this.autoLoad = true});
+  PaginatedListController(this._fetch,
+      {this.pageSize = 20, this.autoLoad = true});
 
   /// Fetches one page. Implementations receive the 1-based page number.
   final Future<PaginatedList<T>> Function(int page, int limit) _fetch;
@@ -29,7 +30,7 @@ class PaginatedListController<T> extends Notifier<PaginatedList<T>> {
     if (autoLoad) {
       Future<void>.microtask(loadInitial);
     }
-    return const PaginatedList<T>(items: <Never>[], meta: <String, dynamic>{});
+    return PaginatedList<T>(items: <T>[], meta: <String, dynamic>{});
   }
 
   List<T> get items => state.items;
@@ -86,8 +87,7 @@ class PaginatedListController<T> extends Notifier<PaginatedList<T>> {
 
   void removeWhere(bool Function(T) test) {
     state = PaginatedList<T>(
-      items:
-          state.items.where((T e) => !test(e)).toList(growable: false),
+      items: state.items.where((T e) => !test(e)).toList(growable: false),
       meta: state.meta,
     );
   }

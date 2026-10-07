@@ -26,7 +26,8 @@ class EquipmentDetailPage extends ConsumerStatefulWidget {
   final String equipmentId;
 
   @override
-  ConsumerState<EquipmentDetailPage> createState() => _EquipmentDetailPageState();
+  ConsumerState<EquipmentDetailPage> createState() =>
+      _EquipmentDetailPageState();
 }
 
 class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
@@ -56,7 +57,8 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
       if (!mounted) return;
       setState(() {
         _item = item;
-        _favorite = saved.items.any((FavoriteEntry f) => f.equipment.id == item.id);
+        _favorite =
+            saved.items.any((FavoriteEntry f) => f.equipment.id == item.id);
         _error = null;
         _loading = false;
       });
@@ -93,7 +95,8 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
   Future<void> _book() async {
     final Equipment? item = _item;
     if (item == null) return;
-    final DateTime start = _rangeStart ?? DateTime.now().add(const Duration(days: 1));
+    final DateTime start =
+        _rangeStart ?? DateTime.now().add(const Duration(days: 1));
     final DateTime end = _rangeEnd ?? start;
 
     final bool? created = await Navigator.of(context).push<bool>(
@@ -163,7 +166,8 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
                 child: InkWell(
                   customBorder: const CircleBorder(),
                   onTap: () => Navigator.of(context).pop(),
-                  child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                  child:
+                      const Icon(Icons.arrow_back_rounded, color: Colors.white),
                 ),
               ),
             ),
@@ -176,7 +180,8 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
                   child: InkWell(
                     customBorder: const CircleBorder(),
                     onTap: _report,
-                    child: const Icon(Icons.flag_outlined, color: Colors.white, size: 20),
+                    child: const Icon(Icons.flag_outlined,
+                        color: Colors.white, size: 20),
                   ),
                 ),
               ),
@@ -234,7 +239,8 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(item.title, style: theme.textTheme.headlineLarge),
+                        child: Text(item.title,
+                            style: theme.textTheme.headlineLarge),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       if (item.boostIsActive)
@@ -252,9 +258,12 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
                           size: 15, color: theme.colorScheme.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Expanded(
-                        child: Text(item.location, style: theme.textTheme.bodyMedium),
+                        child: Text(item.location,
+                            style: theme.textTheme.bodyMedium),
                       ),
-                      RatingRow(rating: item.averageRating, reviewCount: item.totalReviews),
+                      RatingRow(
+                          rating: item.averageRating,
+                          reviewCount: item.totalReviews),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -274,7 +283,8 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
                           label: 'Available',
                           value: '${item.quantity}',
                           icon: Icons.inventory_2_outlined,
-                          caption: item.isAvailable ? 'Ready to rent' : 'Paused',
+                          caption:
+                              item.isAvailable ? 'Ready to rent' : 'Paused',
                           tone: item.isAvailable
                               ? AppColors.success
                               : AppColors.grey500,
@@ -301,9 +311,11 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
                       ),
                     ),
                   ],
-                  if (item.description != null && item.description!.isNotEmpty) ...[
+                  if (item.description != null &&
+                      item.description!.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.lg),
-                    Text('About this equipment', style: theme.textTheme.titleMedium),
+                    Text('About this equipment',
+                        style: theme.textTheme.titleMedium),
                     const SizedBox(height: AppSpacing.xs),
                     Text(item.description!, style: theme.textTheme.bodyLarge),
                   ],
@@ -341,7 +353,8 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
       ),
       child: Row(
         children: [
-          NeoAvatar(initials: owner.initials, imageUrl: owner.profileImage, size: 48),
+          NeoAvatar(
+              initials: owner.initials, imageUrl: owner.profileImage, size: 48),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -466,7 +479,8 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
     }
     // Reject ranges that cross a blocked day.
     final List<DateTime> span = Dates.rangeInclusive(_rangeStart!, selected);
-    if (span.any((DateTime d) => blocked.any((DateTime b) => Dates.isSameDay(b, d)))) {
+    if (span.any(
+        (DateTime d) => blocked.any((DateTime b) => Dates.isSameDay(b, d)))) {
       showNeoSnack(context, 'Your range includes an unavailable day',
           isError: true, icon: Icons.event_busy_rounded);
       _rangeStart = null;
@@ -485,7 +499,8 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
         child: Row(
           children: [
             Icon(Icons.touch_app_outlined,
-                size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                size: 18,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Text(
@@ -512,7 +527,10 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
       border: true,
       child: Column(
         children: [
-          DetailRow(label: '${Money.format(item.pricePerDay)} × $days day${days == 1 ? '' : 's'}', value: Money.format(preview.total)),
+          DetailRow(
+              label:
+                  '${Money.format(item.pricePerDay)} × $days day${days == 1 ? '' : 's'}',
+              value: Money.format(preview.total)),
           DetailRow(
             label: 'Platform fee (10%)',
             value: Money.format(preview.commission),
@@ -531,7 +549,8 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
 
   Widget _bottomBar(BuildContext context, Equipment item, bool isMine) {
     final ThemeData theme = Theme.of(context);
-    final DateTime start = _rangeStart ?? DateTime.now().add(const Duration(days: 1));
+    final DateTime start =
+        _rangeStart ?? DateTime.now().add(const Duration(days: 1));
     final DateTime end = _rangeEnd ?? start;
     final ({double total, double commission, double deposit}) preview =
         BookingRepository.preview(
@@ -566,7 +585,10 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
                 ),
                 Text(
                   Money.format(preview.total),
-                  style: theme.textTheme.numeric,
+                  style: theme.textTheme.displayLarge?.copyWith(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -578,7 +600,8 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
               expand: false,
               onPressed: () => Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(
-                  builder: (BuildContext _) => EquipmentFormPage(existing: item),
+                  builder: (BuildContext _) =>
+                      EquipmentFormPage(existing: item),
                 ),
               ),
             )
@@ -594,8 +617,13 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
               label: item.isAvailable ? 'Request to book' : 'Unavailable',
               expand: false,
               loading: _busy,
-              onPressed:
-                  item.isAvailable ? () async { setState(() => _busy = true); await _book(); setState(() => _busy = false); } : null,
+              onPressed: item.isAvailable
+                  ? () async {
+                      setState(() => _busy = true);
+                      await _book();
+                      setState(() => _busy = false);
+                    }
+                  : null,
             ),
           ],
         ],
@@ -670,7 +698,8 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Report this listing', style: Theme.of(context).textTheme.headlineMedium),
+          Text('Report this listing',
+              style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Reports are reviewed by the Neo team. Serious issues may lead to a listing being removed.',

@@ -16,7 +16,8 @@ class PaymentsRepository {
     required String bookingId,
     required MobileMoneyProvider provider,
   }) async =>
-      PaymentIntent.fromJson(asMap(await _post(ApiPaths.paymentsInitiate, body: {
+      PaymentIntent.fromJson(
+          asMap(await _post(ApiPaths.paymentsInitiate, body: {
         'bookingId': bookingId,
         'provider': provider.wire,
       })));
@@ -46,7 +47,8 @@ class PaymentsRepository {
   }
 
   Future<EarningsBreakdown> earningsBreakdown() async =>
-      EarningsBreakdown.fromJson(asMap(await _get(ApiPaths.paymentsEarningsBreakdown)));
+      EarningsBreakdown.fromJson(
+          asMap(await _get(ApiPaths.paymentsEarningsBreakdown)));
 
   Future<Withdrawal> withdraw({
     required double amount,
@@ -95,7 +97,8 @@ class ReviewsRepository {
       })));
 
   Future<PaginatedList<Review>> given({int page = 1, int limit = 20}) async =>
-      _page(await _get(ApiPaths.reviewsMy, query: {'page': page, 'limit': limit}));
+      _page(await _get(ApiPaths.reviewsMy,
+          query: {'page': page, 'limit': limit}));
 
   Future<PaginatedList<Review>> forEquipment(String equipmentId,
           {int page = 1, int limit = 20}) async =>
@@ -124,7 +127,13 @@ PaginatedList<Review> _reviewPage(dynamic res) {
   );
 }
 
-PaginatedList<Review> _page(dynamic res) => _reviewPage(res);
+PaginatedList<AppNotification> _notificationPage(dynamic res) {
+  final Map<String, dynamic> map = asMap(res);
+  return PaginatedList<AppNotification>(
+    items: asMapList(map['data']).map(AppNotification.fromJson).toList(),
+    meta: asMap(map['meta']),
+  );
+}
 
 class FavoritesRepository {
   FavoritesRepository(this._get, this._post, this._delete);
@@ -134,7 +143,8 @@ class FavoritesRepository {
   final Future<dynamic> Function(String path, {Object? body}) _post;
   final Future<dynamic> Function(String path, {Object? body}) _delete;
 
-  Future<PaginatedList<FavoriteEntry>> list({int page = 1, int limit = 20}) async {
+  Future<PaginatedList<FavoriteEntry>> list(
+      {int page = 1, int limit = 20}) async {
     final dynamic res =
         await _get(ApiPaths.favorites, query: {'page': page, 'limit': limit});
     final Map<String, dynamic> map = asMap(res);
@@ -163,14 +173,14 @@ class NotificationsRepository {
     int page = 1,
     int limit = 20,
   }) async =>
-      _page(await _get(ApiPaths.notifications,
+      _notificationPage(await _get(ApiPaths.notifications,
           query: {'page': page, 'limit': limit}));
 
   Future<PaginatedList<AppNotification>> unread({
     int page = 1,
     int limit = 20,
   }) async =>
-      _page(await _get(ApiPaths.notificationsUnread,
+      _notificationPage(await _get(ApiPaths.notificationsUnread,
           query: {'page': page, 'limit': limit}));
 
   Future<AppNotification> markRead(String id) async => AppNotification.fromJson(
@@ -183,10 +193,12 @@ class NotificationsRepository {
 
   Future<void> delete(String id) => _delete(ApiPaths.notification(id));
 
-  Future<NotificationSettings> settings() async => NotificationSettings.fromJson(
-      asMap(await _get(ApiPaths.notificationsSettings)));
+  Future<NotificationSettings> settings() async =>
+      NotificationSettings.fromJson(
+          asMap(await _get(ApiPaths.notificationsSettings)));
 
-  Future<NotificationSettings> updateSettings(NotificationSettings value) async =>
+  Future<NotificationSettings> updateSettings(
+          NotificationSettings value) async =>
       NotificationSettings.fromJson(asMap(await _patch(
         ApiPaths.notificationsSettings,
         body: {
@@ -279,9 +291,10 @@ class TrustRepository {
         if (details != null && details.isNotEmpty) 'details': details,
       })));
 
-  Future<PaginatedList<Report>> myReports({int page = 1, int limit = 20}) async {
-    final dynamic res = await _get(ApiPaths.reportsMine,
-        query: {'page': page, 'limit': limit});
+  Future<PaginatedList<Report>> myReports(
+      {int page = 1, int limit = 20}) async {
+    final dynamic res =
+        await _get(ApiPaths.reportsMine, query: {'page': page, 'limit': limit});
     final Map<String, dynamic> map = asMap(res);
     return PaginatedList<Report>(
       items: asMapList(map['data']).map(Report.fromJson).toList(),

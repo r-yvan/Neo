@@ -8,6 +8,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/users_repository.dart' show PaginatedList;
 import '../profile/public_profile_page.dart';
 
 /// Review list. Used for a listing (`?equipmentId=`), a person (`?userId=`)
@@ -44,7 +45,7 @@ class _ReviewsPageState extends ConsumerState<ReviewsPage> {
     Future<void>.microtask(_load);
   }
 
-  Future<void> _fetch(int page) {
+  Future<PaginatedList<Review>> _fetch(int page) async {
     final ReviewsRepository repo = ref.read(reviewsRepositoryProvider);
     if (widget.mine) return repo.given(page: page);
     if (widget.equipmentId != null) {
@@ -100,10 +101,13 @@ class _ReviewsPageState extends ConsumerState<ReviewsPage> {
   }
 
   Future<void> _delete(Review review) async {
-    setState(() => _items = _items.where((Review r) => r.id != review.id).toList());
+    setState(
+        () => _items = _items.where((Review r) => r.id != review.id).toList());
     try {
       await ref.read(reviewsRepositoryProvider).delete(review.id);
-      if (mounted) showNeoSnack(context, 'Review deleted', icon: Icons.delete_outline_rounded);
+      if (mounted)
+        showNeoSnack(context, 'Review deleted',
+            icon: Icons.delete_outline_rounded);
     } on ApiException catch (e) {
       if (mounted) {
         showNeoSnack(context, e.message, isError: true);
@@ -128,7 +132,8 @@ class _ReviewsPageState extends ConsumerState<ReviewsPage> {
           onRefresh: _load,
           child: NotificationListener<ScrollNotification>(
             onNotification: (ScrollNotification n) {
-              if (n.metrics.pixels > n.metrics.maxScrollExtent - 400) _loadMore();
+              if (n.metrics.pixels > n.metrics.maxScrollExtent - 400)
+                _loadMore();
               return false;
             },
             child: _loading && _items.isEmpty

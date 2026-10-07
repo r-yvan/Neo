@@ -11,6 +11,7 @@ import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/equipment_repository.dart';
+import '../auth/login_page.dart' show NeoErrorBanner;
 import 'availability_page.dart';
 
 /// Create or edit a listing.
@@ -52,7 +53,8 @@ class _EquipmentFormPageState extends ConsumerState<EquipmentFormPage> {
 
   late EquipmentCategory _category =
       widget.existing?.category ?? EquipmentCategory.chairs;
-  late List<String> _images = List<String>.from(widget.existing?.images ?? const <String>[]);
+  late List<String> _images =
+      List<String>.from(widget.existing?.images ?? const <String>[]);
   bool _busy = false;
   String? _error;
 
@@ -78,7 +80,8 @@ class _EquipmentFormPageState extends ConsumerState<EquipmentFormPage> {
       if (picked == null) return;
       setState(() => _images = <String>[..._images, picked.path]);
     } catch (e) {
-      if (mounted) showNeoSnack(context, 'Could not open the gallery', isError: true);
+      if (mounted)
+        showNeoSnack(context, 'Could not open the gallery', isError: true);
     }
   }
 
@@ -113,9 +116,8 @@ class _EquipmentFormPageState extends ConsumerState<EquipmentFormPage> {
 
   EquipmentDraft _draft() => EquipmentDraft(
         title: _title.text.trim(),
-        description: _description.text.trim().isEmpty
-            ? null
-            : _description.text.trim(),
+        description:
+            _description.text.trim().isEmpty ? null : _description.text.trim(),
         category: _category,
         quantity: int.parse(_quantity.text.trim()),
         pricePerDay: double.parse(_price.text.trim().replaceAll(',', '')),
@@ -322,7 +324,9 @@ class _EquipmentFormPageState extends ConsumerState<EquipmentFormPage> {
               NeoButton(
                 label: widget.isEdit ? 'Save changes' : 'Publish listing',
                 loading: _busy,
-                icon: widget.isEdit ? Icons.check_rounded : Icons.rocket_launch_rounded,
+                icon: widget.isEdit
+                    ? Icons.check_rounded
+                    : Icons.rocket_launch_rounded,
                 onPressed: _busy || !canList ? null : _submit,
               ),
             ],
@@ -431,7 +435,8 @@ class _EquipmentFormPageState extends ConsumerState<EquipmentFormPage> {
         child: SizedBox(
           width: 84,
           height: 84,
-          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.accent),
+          child:
+              const Icon(Icons.add_a_photo_outlined, color: AppColors.accent),
         ),
       ),
     );
@@ -451,7 +456,8 @@ class _EquipmentFormPageState extends ConsumerState<EquipmentFormPage> {
                   label: district,
                   dense: true,
                   selected: _location.text == district,
-                  onTap: () => setState(() => _location.text = 'Kigali - $district'),
+                  onTap: () =>
+                      setState(() => _location.text = 'Kigali - $district'),
                 ))
             .toList(),
       ),

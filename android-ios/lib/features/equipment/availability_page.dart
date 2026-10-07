@@ -10,6 +10,7 @@ import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/booking_repository.dart';
+import '../auth/login_page.dart' show NeoErrorBanner;
 
 /// Owner-side availability editor.
 ///
@@ -41,8 +42,9 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
 
   Future<void> _load() async {
     try {
-      final List<AvailabilityDay> days =
-          await ref.read(equipmentRepositoryProvider).availability(widget.equipment.id);
+      final List<AvailabilityDay> days = await ref
+          .read(equipmentRepositoryProvider)
+          .availability(widget.equipment.id);
       if (mounted) {
         setState(() {
           _days = days;
@@ -89,7 +91,9 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
   Future<void> _unblock(DateTime date) async {
     setState(() => _busy = true);
     try {
-      await ref.read(equipmentRepositoryProvider).clearDate(widget.equipment.id, date);
+      await ref
+          .read(equipmentRepositoryProvider)
+          .clearDate(widget.equipment.id, date);
       if (mounted) {
         setState(() => _busy = false);
         await _load();
@@ -121,7 +125,8 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
               child: ListView(
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 children: [
-                  Text(widget.equipment.title, style: theme.textTheme.headlineMedium),
+                  Text(widget.equipment.title,
+                      style: theme.textTheme.headlineMedium),
                   const SizedBox(height: 2),
                   Text(
                     '${widget.equipment.quantity} units · ${widget.equipment.location}',
@@ -135,7 +140,8 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Accepting bookings', style: theme.textTheme.titleSmall),
+                              Text('Accepting bookings',
+                                  style: theme.textTheme.titleSmall),
                               const SizedBox(height: 2),
                               Text(
                                 isPaused
@@ -159,7 +165,9 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                               if (mounted) {
                                 showNeoSnack(
                                   context,
-                                  value ? 'Your listing is live' : 'Listings paused',
+                                  value
+                                      ? 'Your listing is live'
+                                      : 'Listings paused',
                                 );
                               }
                             } on ApiException catch (e) {
@@ -173,7 +181,8 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Tap dates to block them', style: theme.textTheme.titleSmall),
+                  Text('Tap dates to block them',
+                      style: theme.textTheme.titleSmall),
                   const SizedBox(height: AppSpacing.xs),
                   NeoCard(
                     padding: const EdgeInsets.fromLTRB(6, 6, 6, 10),
@@ -274,7 +283,8 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                         : 'Block ${_selected.length} date${_selected.length == 1 ? '' : 's'}',
                     variant: NeoButtonVariant.secondary,
                     loading: _busy,
-                    onPressed: _selected.isEmpty || _busy ? null : _blockSelected,
+                    onPressed:
+                        _selected.isEmpty || _busy ? null : _blockSelected,
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   Text('Blocked dates', style: theme.textTheme.titleMedium),
@@ -308,7 +318,8 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                                       Text(
                                         '$active booking${active == 1 ? '' : 's'} on this date',
                                         style: theme.textTheme.bodySmall
-                                            ?.copyWith(color: AppColors.warning),
+                                            ?.copyWith(
+                                                color: AppColors.warning),
                                       ),
                                     ],
                                   ],
@@ -333,17 +344,13 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
   /// accident. Silent on failure — blocking is still allowed.
   int _activeBookingsOn(DateTime day) {
     final String userId = ref.read(sessionProvider).user?.id ?? '';
-    return ref
-            .read(activeBookingsProvider)
-            .valueOrNull
-            ?.where((Booking b) {
-              if (b.ownerId != userId) return false;
-              if (b.status.isTerminal) return false;
-              final DateTime d = Dates.dayOnly(day);
-              return !d.isBefore(Dates.dayOnly(b.startDate)) &&
-                  !d.isAfter(Dates.dayOnly(b.endDate));
-            })
-            .length ??
+    return ref.read(activeBookingsProvider).valueOrNull?.where((Booking b) {
+          if (b.ownerId != userId) return false;
+          if (b.status.isTerminal) return false;
+          final DateTime d = Dates.dayOnly(day);
+          return !d.isBefore(Dates.dayOnly(b.startDate)) &&
+              !d.isAfter(Dates.dayOnly(b.endDate));
+        }).length ??
         0;
   }
 }

@@ -50,9 +50,8 @@ class NeoScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final Widget content = padded
-        ? Padding(padding: AppSpacing.screen, child: body)
-        : body;
+    final Widget content =
+        padded ? Padding(padding: AppSpacing.screen, child: body) : body;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -239,13 +238,13 @@ class NeoIconButton extends StatelessWidget {
         onTap: onPressed,
         child: Padding(
           padding: const EdgeInsets.all(9),
-          child: Icon(icon, size: 20, color: onPressed == null ? fg.withValues(alpha: 0.4) : fg),
+          child: Icon(icon,
+              size: 20,
+              color: onPressed == null ? fg.withValues(alpha: 0.4) : fg),
         ),
       ),
     );
-    return tooltip == null
-        ? button
-        : Tooltip(message: tooltip!, child: button);
+    return tooltip == null ? button : Tooltip(message: tooltip!, child: button);
   }
 }
 
@@ -296,7 +295,9 @@ class NeoChip extends StatelessWidget {
                 Icon(
                   icon,
                   size: dense ? 14 : 16,
-                  color: selected ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                  color: selected
+                      ? Colors.white
+                      : theme.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 6),
               ],
@@ -307,7 +308,8 @@ class NeoChip extends StatelessWidget {
                         : theme.textTheme.labelMedium)!
                     .copyWith(
                   color: selected ? Colors.white : theme.colorScheme.onSurface,
-                  fontWeight: selected ? AppFontWeight.semiBold : AppFontWeight.medium,
+                  fontWeight:
+                      selected ? AppFontWeight.semiBold : AppFontWeight.medium,
                 ),
               ),
             ],
@@ -351,9 +353,7 @@ class NeoCard extends StatelessWidget {
         color: Colors.transparent,
         borderRadius: AppRadii.lgAll,
         clipBehavior: Clip.antiAlias,
-        child: onTap == null
-            ? content
-            : InkWell(onTap: onTap, child: content),
+        child: onTap == null ? content : InkWell(onTap: onTap, child: content),
       ),
     );
   }
@@ -397,7 +397,8 @@ class StatTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   label.toUpperCase(),
-                  style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.labelSmall
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -409,7 +410,11 @@ class StatTile extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               value,
-              style: theme.textTheme.numeric.copyWith(color: tone),
+              style: theme.textTheme.displayLarge?.copyWith(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: tone,
+              ),
             ),
           ),
           if (caption != null)
@@ -459,9 +464,8 @@ class EquipmentImage extends StatelessWidget {
     if (source.isEmpty) {
       image = _placeholder(context);
     } else if (_isLocal) {
-      final String path = source.startsWith('file:')
-          ? Uri.parse(source).toFilePath()
-          : source;
+      final String path =
+          source.startsWith('file:') ? Uri.parse(source).toFilePath() : source;
       image = Image.file(
         File(path),
         width: width,
@@ -577,7 +581,8 @@ class NeoAvatar extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: hasImage
-          ? EquipmentImage(source: imageUrl!, width: size, height: size, radius: size)
+          ? EquipmentImage(
+              source: imageUrl!, width: size, height: size, radius: size)
           : Center(
               child: Text(
                 initials,
@@ -707,9 +712,8 @@ class DetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final TextStyle labelStyle = emphasis
-        ? theme.textTheme.titleMedium!
-        : theme.textTheme.bodyMedium!;
+    final TextStyle labelStyle =
+        emphasis ? theme.textTheme.titleMedium! : theme.textTheme.bodyMedium!;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -721,8 +725,9 @@ class DetailRow extends StatelessWidget {
               Text(
                 value,
                 style: (emphasis
-                    ? theme.textTheme.titleMedium!
-                    : theme.textTheme.titleSmall!).copyWith(
+                        ? theme.textTheme.titleMedium!
+                        : theme.textTheme.titleSmall!)
+                    .copyWith(
                   color: valueColour ?? theme.colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.right,
@@ -1034,7 +1039,9 @@ void showNeoSnack(
         children: [
           Icon(
             icon ??
-                (isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded),
+                (isError
+                    ? Icons.error_outline_rounded
+                    : Icons.check_circle_outline_rounded),
             size: 18,
             color: Colors.white,
           ),
@@ -1126,7 +1133,11 @@ Future<bool> confirmNeo(
 
 /// Small rounded avatar stack placeholder for owner credibility.
 class TrustRow extends StatelessWidget {
-  const TrustRow({super.key, required this.initials, required this.subtitle, this.trailing});
+  const TrustRow(
+      {super.key,
+      required this.initials,
+      required this.subtitle,
+      this.trailing});
 
   final String initials;
   final String subtitle;
@@ -1140,7 +1151,9 @@ class TrustRow extends StatelessWidget {
         NeoAvatar(initials: initials, size: 38),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
-          child: Text(subtitle, style: theme.textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
+          child: Text(subtitle,
+              style: theme.textTheme.bodyMedium,
+              overflow: TextOverflow.ellipsis),
         ),
         if (trailing != null) trailing!,
       ],
@@ -1200,7 +1213,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
               ),
             ),
           if (widget.badge != null)
-            Positioned(top: AppSpacing.sm, right: AppSpacing.sm, child: widget.badge!),
+            Positioned(
+                top: AppSpacing.sm, right: AppSpacing.sm, child: widget.badge!),
           if (count > 1)
             Positioned(
               bottom: AppSpacing.sm,
@@ -1216,7 +1230,9 @@ class _ImageCarouselState extends State<ImageCarousel> {
                     width: active ? 18 : 6,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: active ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                      color: active
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.5),
                       borderRadius: AppRadii.pillAll,
                     ),
                   );
