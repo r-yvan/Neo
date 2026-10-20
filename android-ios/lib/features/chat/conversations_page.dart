@@ -12,6 +12,7 @@ import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/social_repository.dart';
+import '../../data/repositories/users_repository.dart' show PaginatedList;
 
 /// Inbox: every conversation the user is part of, newest activity first.
 ///

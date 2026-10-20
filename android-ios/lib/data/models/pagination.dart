@@ -2,7 +2,7 @@
 /// `{ "data": [...], "meta": { total, page, limit, totalPages } }`.
 library;
 
-import '../core/utils/parsing.dart';
+import '../../core/utils/parsing.dart';
 
 class PageMeta {
   const PageMeta({

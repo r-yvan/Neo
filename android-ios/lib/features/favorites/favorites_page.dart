@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/users_repository.dart' show PaginatedList;
 import '../equipment/equipment_detail_page.dart';
 import '../equipment/widgets/equipment_card.dart';
 

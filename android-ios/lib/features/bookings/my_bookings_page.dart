@@ -9,6 +9,7 @@ import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/booking_repository.dart';
+import '../../data/repositories/users_repository.dart';
 import 'booking_detail_page.dart';
 import '../shell/root_shell.dart';
 
@@ -206,7 +207,8 @@ class _MyBookingsPageState extends ConsumerState<MyBookingsPage>
           padding: const EdgeInsets.all(AppSpacing.lg),
           sliver: SliverList(
             delegate: SliverChildListDelegate(
-              List<Widget>.generate(4, (int i) => const SkeletonCard(height: 110)),
+              List<Widget>.generate(
+                  4, (int i) => const SkeletonCard(height: 110)),
             ),
           ),
         ),
@@ -237,7 +239,8 @@ class _MyBookingsPageState extends ConsumerState<MyBookingsPage>
             message: _role == BookingRole.renter
                 ? 'Find equipment on Explore and send your first rental request.'
                 : 'When a renter requests one of your items, it will appear here.',
-            actionLabel: _role == BookingRole.renter ? 'Browse equipment' : null,
+            actionLabel:
+                _role == BookingRole.renter ? 'Browse equipment' : null,
             onAction: () => openShellTab(context, ShellTab.explore),
           ),
         ),
@@ -292,7 +295,8 @@ class _BookingCard extends ConsumerWidget {
         onTap: () async {
           await Navigator.of(context).push<void>(
             MaterialPageRoute<void>(
-              builder: (BuildContext _) => BookingDetailPage(bookingId: booking.id),
+              builder: (BuildContext _) =>
+                  BookingDetailPage(bookingId: booking.id),
             ),
           );
           onChanged();
@@ -370,8 +374,7 @@ class _BookingCard extends ConsumerWidget {
                     style: theme.textTheme.bodySmall,
                   ),
                   const Spacer(),
-                  if (asOwner &&
-                      booking.status == BookingStatus.pending) ...[
+                  if (asOwner && booking.status == BookingStatus.pending) ...[
                     TextButton(
                       onPressed: () => _transition(context, ref, 'reject'),
                       child: const Text('Decline'),
@@ -437,12 +440,18 @@ class BookingStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (BadgeTone tone, IconData icon) = switch (status) {
       BookingStatus.pending => (BadgeTone.warning, Icons.hourglass_top_rounded),
-      BookingStatus.accepted => (BadgeTone.accent, Icons.event_available_rounded),
+      BookingStatus.accepted => (
+          BadgeTone.accent,
+          Icons.event_available_rounded
+        ),
       BookingStatus.ongoing => (BadgeTone.accent, Icons.local_shipping_rounded),
       BookingStatus.completed => (BadgeTone.success, Icons.done_all_rounded),
       BookingStatus.rejected => (BadgeTone.danger, Icons.block_rounded),
       BookingStatus.cancelled => (BadgeTone.neutral, Icons.cancel_outlined),
-      BookingStatus.disputed => (BadgeTone.danger, Icons.report_problem_outlined),
+      BookingStatus.disputed => (
+          BadgeTone.danger,
+          Icons.report_problem_outlined
+        ),
     };
     return NeoBadge(label: status.label, tone: tone, icon: icon);
   }

@@ -8,6 +8,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/social_repository.dart' show NotificationsRepository;
 import '../../data/repositories/users_repository.dart' show PaginatedList;
 import '../bookings/booking_detail_page.dart';
 import 'notification_settings_page.dart';

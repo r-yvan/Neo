@@ -8,7 +8,7 @@ import '../../core/utils/validators.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
-import 'login_page.dart' show NeoErrorBanner;
+import 'login_page.dart' show NeoErrorBanner, OtpNotice, ResendCountdown;
 
 /// Six-digit code entry shared by sign-in, phone verification and password
 /// reset. [onVerify] receives the code; the page pops itself on success.

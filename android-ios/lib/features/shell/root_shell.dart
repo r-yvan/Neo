@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import '../bookings/my_bookings_page.dart';
@@ -20,7 +22,9 @@ final StateProvider<int> shellTabProvider = StateProvider<int>((Ref ref) => 0);
 
 /// Opens the shell on a given tab. Safe to call from anywhere.
 void openShellTab(BuildContext context, int index) {
-  container.read(shellTabProvider.notifier).state = index;
+  ProviderScope.containerOf(context, listen: false)
+      .read(shellTabProvider.notifier)
+      .state = index;
 }
 
 /// Tabs in display order.
@@ -107,6 +111,7 @@ class _NeoNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final S s = L10n.i;
 
     Widget destination({
       required IconData icon,
@@ -133,25 +138,25 @@ class _NeoNavBar extends StatelessWidget {
           destination(
             icon: Icons.explore_outlined,
             active: Icons.explore_rounded,
-            label: 'Explore',
+            label: s.navExplore,
             value: ShellTab.explore,
           ),
           destination(
             icon: Icons.receipt_long_outlined,
             active: Icons.receipt_long_rounded,
-            label: 'Bookings',
+            label: s.navBookings,
             value: ShellTab.bookings,
           ),
           destination(
             icon: Icons.favorite_border_rounded,
             active: Icons.favorite_rounded,
-            label: 'Saved',
+            label: s.navSaved,
             value: ShellTab.saved,
           ),
           destination(
             icon: Icons.chat_bubble_outline_rounded,
             active: Icons.chat_bubble_rounded,
-            label: 'Chat',
+            label: s.navMessages,
             value: ShellTab.messages,
           ),
           destination(
@@ -161,8 +166,14 @@ class _NeoNavBar extends StatelessWidget {
             active: ownerTab
                 ? Icons.storefront_rounded
                 : Icons.add_business_rounded,
-            label: ownerTab ? 'My gear' : 'List gear',
+            label: ownerTab ? s.navMyGear : s.navListGear,
             value: ShellTab.owner,
+          ),
+          destination(
+            icon: Icons.person_outline_rounded,
+            active: Icons.person_rounded,
+            label: s.navProfile,
+            value: ShellTab.profile,
           ),
         ],
       ),
@@ -196,6 +207,7 @@ class BecomeOwnerPrompt extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
+    final S s = L10n.i;
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
@@ -203,36 +215,36 @@ class BecomeOwnerPrompt extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
             const SizedBox(height: AppSpacing.md),
-            Text('Turn your gear\ninto income', style: theme.textTheme.displayMedium),
+            Text(s.ownerPromptTitle, style: theme.textTheme.displayMedium),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Owners on Neo list chairs, tents, sound systems and generators and get paid for every completed rental. You keep 90% — we take a 10% commission.',
+              s.ownerPromptBody,
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: AppSpacing.xl),
-            const _Benefit(
+            _Benefit(
               icon: Icons.add_photo_alternate_outlined,
-              title: 'List in under a minute',
-              body: 'Photos, a daily price and the number of units. That is all we need.',
+              title: s.ownerBenefit1Title,
+              body: s.ownerBenefit1Body,
             ),
-            const _Benefit(
+            _Benefit(
               icon: Icons.calendar_month_rounded,
-              title: 'You choose every booking',
-              body: 'Requests arrive for review. Accept only the dates that suit you.',
+              title: s.ownerBenefit2Title,
+              body: s.ownerBenefit2Body,
             ),
-            const _Benefit(
+            _Benefit(
               icon: Icons.payments_outlined,
-              title: 'Paid to your MoMo',
-              body: 'Payouts land after each rental, and you can withdraw any time.',
+              title: s.ownerBenefit3Title,
+              body: s.ownerBenefit3Body,
             ),
-            const _Benefit(
+            _Benefit(
               icon: Icons.bolt_rounded,
-              title: 'Boost to be seen first',
-              body: 'Pay a small fee to appear at the top of search results for a few days.',
+              title: s.ownerBenefit4Title,
+              body: s.ownerBenefit4Body,
             ),
             const SizedBox(height: AppSpacing.xl),
             NeoButton(
-              label: 'Become an owner',
+              label: s.ownerBecomeCta,
               icon: Icons.storefront_rounded,
               onPressed: () async {
                 await ref
@@ -240,14 +252,14 @@ class BecomeOwnerPrompt extends ConsumerWidget {
                     .addRole(UserRole.owner);
                 await ref.read(sessionProvider.notifier).refreshUser();
                 if (context.mounted) {
-                  showNeoSnack(context, 'You can now list your equipment',
+                  showNeoSnack(context, s.ownerGrantedSnack,
                       icon: Icons.check_circle_outline_rounded);
                 }
               },
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Your first five listings are free. Verify your national ID to unlock payouts.',
+              s.ownerFootnote,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall,
             ),

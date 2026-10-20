@@ -1,5 +1,5 @@
 import '../../core/network/api_paths.dart';
-import '../../core/utils/parsing.dart' show isoDate;
+import '../../core/utils/parsing.dart';
 import '../models/models.dart';
 import 'users_repository.dart';
 
@@ -57,6 +57,7 @@ class EquipmentQuery {
     double? maxPrice,
     DateTime? date,
     bool clearDate = false,
+    bool clearCategory = false,
     double? latitude,
     double? longitude,
     double? radiusKm,
@@ -65,7 +66,7 @@ class EquipmentQuery {
         page: page ?? this.page,
         limit: limit ?? this.limit,
         search: search ?? this.search,
-        category: category ?? this.category,
+        category: clearCategory ? null : (category ?? this.category),
         location: location ?? this.location,
         minPrice: minPrice ?? this.minPrice,
         maxPrice: maxPrice ?? this.maxPrice,
@@ -139,7 +140,8 @@ class EquipmentDraft {
 }
 
 class EquipmentRepository {
-  EquipmentRepository(this._get, this._post, this._patch, this._put, this._delete);
+  EquipmentRepository(
+      this._get, this._post, this._patch, this._put, this._delete);
 
   final Future<dynamic> Function(String path,
       {Map<String, dynamic>? query, bool skipAuth}) _get;
@@ -154,11 +156,13 @@ class EquipmentRepository {
   Future<PaginatedList<Equipment>> nearby(EquipmentQuery query) async =>
       _page(await _get(ApiPaths.equipmentNearby, query: query.toQuery()));
 
-  Future<PaginatedList<Equipment>> popular({int page = 1, int limit = 10}) async =>
+  Future<PaginatedList<Equipment>> popular(
+          {int page = 1, int limit = 10}) async =>
       _page(await _get(ApiPaths.equipmentPopular,
           query: {'page': page, 'limit': limit}));
 
-  Future<PaginatedList<Equipment>> mine({int page = 1, int limit = 20, String? search}) async =>
+  Future<PaginatedList<Equipment>> mine(
+          {int page = 1, int limit = 20, String? search}) async =>
       _page(await _get(ApiPaths.equipmentMy, query: {
         'page': page,
         'limit': limit,
@@ -175,16 +179,16 @@ class EquipmentRepository {
       Equipment.fromJson(asMap(await _patch(ApiPaths.equipmentById(id),
           body: draft.toUpdateBody())));
 
-  Future<Equipment> setAvailability(String id, {required bool isAvailable}) async =>
+  Future<Equipment> setAvailability(String id,
+          {required bool isAvailable}) async =>
       Equipment.fromJson(asMap(await _patch(ApiPaths.equipmentById(id),
           body: {'isAvailable': isAvailable})));
 
-  Future<void> delete(String id) =>
-      _delete(ApiPaths.equipmentById(id));
+  Future<void> delete(String id) => _delete(ApiPaths.equipmentById(id));
 
   Future<Equipment> addImages(String id, List<String> urls) async =>
-      Equipment.fromJson(asMap(await _post(ApiPaths.equipmentImages(id),
-          body: {'urls': urls})));
+      Equipment.fromJson(asMap(
+          await _post(ApiPaths.equipmentImages(id), body: {'urls': urls})));
 
   /// `imageId` is either the array index or the URL-encoded URL.
   Future<Equipment> removeImage(String id, String imageId) async =>
@@ -200,8 +204,7 @@ class EquipmentRepository {
       Equipment.fromJson(asMap(await _delete(ApiPaths.equipmentBoost(id))));
 
   Future<List<AvailabilityDay>> availability(String id) async {
-    final dynamic res =
-        await _get(ApiPaths.equipmentAvailability(id));
+    final dynamic res = await _get(ApiPaths.equipmentAvailability(id));
     return asMapList(asMap(res)['data'])
         .map(AvailabilityDay.fromJson)
         .toList(growable: false);
@@ -236,7 +239,8 @@ class EquipmentRepository {
       _delete(ApiPaths.equipmentAvailabilityDate(id, isoDate(date)));
 
   Future<List<String>> categories() async {
-    final dynamic res = await _get(ApiPaths.equipmentCategories, skipAuth: true);
+    final dynamic res =
+        await _get(ApiPaths.equipmentCategories, skipAuth: true);
     return asStringList(asMap(res)['categories']);
   }
 }

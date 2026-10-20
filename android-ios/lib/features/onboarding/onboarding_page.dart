@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/providers.dart';
+import '../common/language_picker.dart';
 import '../splash/splash_page.dart';
 
 /// Three-screen value proposition shown once on first launch.
@@ -23,29 +25,26 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   final PageController _controller = PageController();
   int _index = 0;
 
-  static const List<_Slide> _slides = <_Slide>[
-    _Slide(
-      eyebrow: 'Rent anything',
-      title: 'Every event starts\nwith equipment',
-      body:
-          'Chairs, tables, tents, sound, power and decor — from verified owners across Kigali and beyond.',
-      glyph: Icons.event_seat_rounded,
-    ),
-    _Slide(
-      eyebrow: 'Book with confidence',
-      title: 'Clear prices.\nNo surprises.',
-      body:
-          'See the daily rate, the deposit and the exact total before you pay. Pay with MTN MoMo or Airtel Money.',
-      glyph: Icons.payments_rounded,
-    ),
-    _Slide(
-      eyebrow: 'Earn from your gear',
-      title: 'Your idle chairs\nshould pay rent',
-      body:
-          'List your equipment in minutes, accept the bookings you want, and get paid straight to your mobile money.',
-      glyph: Icons.trending_up_rounded,
-    ),
-  ];
+  List<_Slide> _slides(S s) => <_Slide>[
+        _Slide(
+          eyebrow: s.onbRentEyebrow,
+          title: s.onbRentTitle,
+          body: s.onbRentBody,
+          glyph: Icons.event_seat_rounded,
+        ),
+        _Slide(
+          eyebrow: s.onbTrustEyebrow,
+          title: s.onbTrustTitle,
+          body: s.onbTrustBody,
+          glyph: Icons.payments_rounded,
+        ),
+        _Slide(
+          eyebrow: s.onbEarnEyebrow,
+          title: s.onbEarnTitle,
+          body: s.onbEarnBody,
+          glyph: Icons.trending_up_rounded,
+        ),
+      ];
 
   @override
   void dispose() {
@@ -60,27 +59,35 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final bool isLast = _index == _slides.length - 1;
+    final S s = L10n.i;
+    final List<_Slide> slides = _slides(s);
+    final bool isLast = _index == slides.length - 1;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: _finish,
-                child: const Text('Skip'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Row(
+                children: [
+                  const LanguagePill(),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: _finish,
+                    child: Text(s.commonSkip),
+                  ),
+                ],
               ),
             ),
             Expanded(
               child: PageView.builder(
                 controller: _controller,
-                itemCount: _slides.length,
+                itemCount: slides.length,
                 onPageChanged: (int i) => setState(() => _index = i),
                 itemBuilder: (BuildContext context, int i) => _SlideView(
-                  slide: _slides[i],
+                  slide: slides[i],
                   index: i,
                 ),
               ),
@@ -96,7 +103,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List<Widget>.generate(_slides.length, (int i) {
+                    children: List<Widget>.generate(slides.length, (int i) {
                       final bool active = i == _index;
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 240),
@@ -115,7 +122,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   NeoButton(
-                    label: isLast ? 'Get started' : 'Continue',
+                    label: isLast ? s.onbGetStarted : s.commonContinue,
                     icon: isLast ? null : Icons.arrow_forward_rounded,
                     onPressed: () {
                       if (isLast) {
@@ -130,7 +137,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    'Free to browse · 10% platform fee only on completed rentals',
+                    s.onbFootnote,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall,
                   ),
@@ -196,18 +203,19 @@ class _Illustration extends StatelessWidget {
   final IconData glyph;
   final int index;
 
-  static const List<(IconData, String)> _chips = <(IconData, String)>[
-    (Icons.event_seat_rounded, 'Chairs'),
-    (Icons.holiday_village_rounded, 'Tents'),
-    (Icons.speaker_rounded, 'Sound'),
-    (Icons.table_restaurant_rounded, 'Tables'),
-    (Icons.electric_bolt_rounded, 'Power'),
-    (Icons.auto_awesome_rounded, 'Decor'),
-  ];
+  List<(IconData, String)> _chips(S s) => <(IconData, String)>[
+        (Icons.event_seat_rounded, s.chipChairs),
+        (Icons.holiday_village_rounded, s.chipTents),
+        (Icons.speaker_rounded, s.chipSound),
+        (Icons.table_restaurant_rounded, s.chipTables),
+        (Icons.electric_bolt_rounded, s.chipPower),
+        (Icons.auto_awesome_rounded, s.chipDecor),
+      ];
 
   @override
   Widget build(BuildContext context) {
-    final (IconData chipIcon, String chipLabel) = _chips[index % _chips.length];
+    final S s = L10n.i;
+    final (IconData chipIcon, String chipLabel) = _chips(s)[index % 6];
     return SizedBox(
       height: 260,
       child: Stack(
@@ -229,7 +237,7 @@ class _Illustration extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [AppColors.accent, Color(0xFF6FB8FF)],
+                colors: [AppColors.accent, Color(0xFFFF9C8A)],
               ),
               shape: BoxShape.circle,
               boxShadow: AppShadows.accent,
@@ -273,7 +281,7 @@ class _Illustration extends StatelessWidget {
                 children: [
                   const Icon(Icons.bolt_rounded, size: 16, color: AppColors.accent),
                   const SizedBox(width: 6),
-                  Text('Top rated', style: AppTypography.labelMedium),
+                  Text(s.chipTopRated, style: AppTypography.labelMedium),
                 ],
               ),
             ),

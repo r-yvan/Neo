@@ -1264,7 +1264,7 @@ class EarningsBars extends StatelessWidget {
       height: 140,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
-        children: entries.takeLast(6).map((MapEntry<String, double> entry) {
+        children: entries.skip(entries.length > 6 ? entries.length - 6 : 0).map((MapEntry<String, double> entry) {
           final double ratio = (entry.value / maxValue).clamp(0.04, 1.0);
           return Expanded(
             child: Padding(

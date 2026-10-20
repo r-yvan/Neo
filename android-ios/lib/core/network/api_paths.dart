@@ -1,12 +1,13 @@
 /// Every endpoint the backend actually exposes.
 ///
 /// Paths are relative to `AppConfig.apiBaseUrl`, which already ends with
-/// `/api/v1`. Nothing here is invented — each entry mirrors a route mapped by
-/// the NestJS controllers (see the API contract notes in the root README).
+/// `/api/v1`, so no version segment is added here. Nothing here is invented —
+/// each entry mirrors a route mapped by the NestJS controllers (see the API
+/// contract notes in the root README).
 library;
 
 abstract final class ApiPaths {
-  static const String _v1 = '/api/v1';
+  static const String _v1 = '';
 
   // ------------------------------------------------------------------ auth
   static const String authRegister = '$_v1/auth/register';

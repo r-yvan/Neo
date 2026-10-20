@@ -47,7 +47,8 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
     super.initState();
     _listProvider = NotifierProvider<PaginatedListController<Equipment>,
         PaginatedList<Equipment>>(
-      PaginatedListController<Equipment>(_fetch, pageSize: AppConfig.pageSize),
+      () => PaginatedListController<Equipment>(_fetch,
+          pageSize: AppConfig.pageSize),
     );
     _scroll.addListener(_onScroll);
   }
@@ -106,8 +107,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<PaginatedList<Equipment>> list =
-        ref.watch(_listProvider);
+    final PaginatedList<Equipment> list = ref.watch(_listProvider);
     final AppUser? user = ref.watch(sessionProvider).user;
 
     return Scaffold(
@@ -256,14 +256,9 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
 
   Widget _metaRow(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<PaginatedList<Equipment>> list =
-        ref.watch(_listProvider);
+    final PaginatedList<Equipment> list = ref.watch(_listProvider);
 
-    final String count = list.whenOrNull(
-          data: (PaginatedList<Equipment> p) =>
-              '${p.meta['total'] ?? p.items.length} items',
-          orElse: () => '',
-        );
+    final String count = '${list.meta['total'] ?? list.items.length} items';
 
     final List<String> active = <String>[
       if (_location != null) _location!,
@@ -319,9 +314,12 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
     );
   }
 
-  List<Widget> _body(AsyncValue<PaginatedList<Equipment>> list) {
-    return list.when(
-      loading: () => <Widget>[
+  List<Widget> _body(PaginatedList<Equipment> page) {
+    final PaginatedListController<Equipment> controller =
+        ref.read(_listProvider.notifier);
+
+    if (!controller.initialised) {
+      return <Widget>[
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           sliver: _grid(
@@ -331,72 +329,71 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
             ),
           ),
         ),
-      ],
-      error: (Object error, StackTrace _) => <Widget>[
+      ];
+    }
+
+    if (controller.error != null && page.isEmpty) {
+      return <Widget>[
         SliverFillRemaining(
           hasScrollBody: false,
           child: NeoErrorState(
-            message: error is ApiException
-                ? error.message
-                : 'Could not load equipment.',
+            message: controller.error!,
             onRetry: () => ref.read(_listProvider.notifier).loadInitial(),
           ),
         ),
-      ],
-      data: (PaginatedList<Equipment> page) {
-        if (page.isEmpty) {
-          return <Widget>[
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: NeoEmptyState(
-                icon: Icons.search_off_rounded,
-                title: _query.isFiltered
-                    ? 'No matches'
-                    : 'No equipment yet',
-                message: _query.isFiltered
-                    ? 'Try a different category, area or price range.'
-                    : 'Be the first to list chairs, tables or sound on Neo.',
-                actionLabel: _query.isFiltered ? 'Clear filters' : null,
-                onAction: () {
-                  _search.clear();
-                  setState(() {
-                    _category = null;
-                    _location = null;
-                    _query = const EquipmentQuery();
-                  });
-                  ref.invalidate(_listProvider);
-                },
-              ),
-            ),
-          ];
-        }
-        return <Widget>[
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            sliver: _grid(
-              page.items.asMap().entries.map((MapEntry<int, Equipment> e) {
-                return EquipmentCard(
-                  item: e.value,
-                  onTap: () => Navigator.of(context).push<void>(
-                    MaterialPageRoute<void>(
-                      builder: (BuildContext _) => EquipmentDetailPage(
-                        equipmentId: e.value.id,
-                      ),
-                    ),
+      ];
+    }
+
+    if (page.isEmpty) {
+      return <Widget>[
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: NeoEmptyState(
+            icon: Icons.search_off_rounded,
+            title: _query.isFiltered ? 'No matches' : 'No equipment yet',
+            message: _query.isFiltered
+                ? 'Try a different category, area or price range.'
+                : 'Be the first to list chairs, tables or sound on Neo.',
+            actionLabel: _query.isFiltered ? 'Clear filters' : null,
+            onAction: () {
+              _search.clear();
+              setState(() {
+                _category = null;
+                _location = null;
+                _query = const EquipmentQuery();
+              });
+              ref.invalidate(_listProvider);
+            },
+          ),
+        ),
+      ];
+    }
+
+    return <Widget>[
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        sliver: _grid(
+          page.items.asMap().entries.map((MapEntry<int, Equipment> e) {
+            return EquipmentCard(
+              item: e.value,
+              onTap: () => Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(
+                  builder: (BuildContext _) => EquipmentDetailPage(
+                    equipmentId: e.value.id,
                   ),
-                );
-              }).toList(),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: ListFooterLoader(
-              loading: ref.watch(_listProvider.notifier).isLoadingMore,
-              endLabel: page.hasMore ? null : 'That is everything for now',
-            ),
-          ),
-        ];
-      },
-    );
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: ListFooterLoader(
+          loading: controller.isLoadingMore,
+          endLabel: page.hasMore ? null : 'That is everything for now',
+        ),
+      ),
+    ];
   }
 
   Widget _grid(List<Widget> children) => SliverGrid(

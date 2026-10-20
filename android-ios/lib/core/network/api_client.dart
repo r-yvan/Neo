@@ -211,6 +211,7 @@ class ApiClient {
         case DioExceptionType.connectionTimeout:
         case DioExceptionType.sendTimeout:
         case DioExceptionType.receiveTimeout:
+        case DioExceptionType.transformTimeout:
           throw ApiException(
             message: 'The server took too long to respond. Try again.',
             isNetwork: true,

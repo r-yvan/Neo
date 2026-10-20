@@ -14,12 +14,14 @@ import '../splash/splash_page.dart';
 /// Session changes `redirect` instead of pushing history, so signing out can
 /// never leave a private screen on the stack.
 class AppRouter {
-  AppRouter(this._ref) {
-    _refresh = _SessionRefresh(_ref);
-  }
+  AppRouter(this._ref);
 
-  final Ref _ref;
-  late final _SessionRefresh _refresh;
+  final WidgetRef _ref;
+  final _SessionRefresh _refresh = _SessionRefresh();
+
+  /// Called by [NeoApp] when the session changes so the router re-evaluates
+  /// its redirects.
+  void sessionChanged() => _refresh.notify();
 
   late final GoRouter _router = GoRouter(
     initialLocation: '/',
@@ -44,7 +46,8 @@ class AppRouter {
     routes: <RouteBase>[
       GoRoute(
         path: '/',
-        builder: (BuildContext context, GoRouterState state) => const SplashPage(),
+        builder: (BuildContext context, GoRouterState state) =>
+            const SplashPage(),
       ),
       GoRoute(
         path: '/onboarding',
@@ -58,7 +61,8 @@ class AppRouter {
       ),
       GoRoute(
         path: '/home',
-        builder: (BuildContext context, GoRouterState state) => const RootShell(),
+        builder: (BuildContext context, GoRouterState state) =>
+            const RootShell(),
         routes: <RouteBase>[
           GoRoute(
             path: 'profile',
@@ -74,9 +78,5 @@ class AppRouter {
 }
 
 class _SessionRefresh extends ChangeNotifier {
-  _SessionRefresh(Ref ref) {
-    ref.listen<SessionState>(sessionProvider, (SessionState? _, SessionState __) {
-      notifyListeners();
-    });
-  }
+  void notify() => notifyListeners();
 }

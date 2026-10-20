@@ -2,12 +2,15 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_locale.dart';
+
 /// Non-sensitive app preferences.
 class AppPreferences {
   AppPreferences._(this._prefs);
 
   static const String _kOnboarded = 'neo_onboarded';
   static const String _kThemeMode = 'neo_theme_mode';
+  static const String _kLocale = 'neo_locale';
   static const String _kLastPhone = 'neo_last_phone';
   static const String _kCachePrefix = 'neo_cache_';
 
@@ -22,11 +25,17 @@ class AppPreferences {
 
   Future<void> resetOnboarding() => _prefs.remove(_kOnboarded);
 
-  /// 0 = system, 1 = light, 2 = dark.
+  /// 0 = system, 1 = english, 2 = kinyarwanda.
   int get themeModeIndex => _prefs.getInt(_kThemeMode) ?? 0;
 
   Future<void> setThemeModeIndex(int value) =>
       _prefs.setInt(_kThemeMode, value);
+
+  AppLocaleChoice get localeChoice =>
+      AppLocaleChoice.fromStorageIndex(_prefs.getInt(_kLocale) ?? 0);
+
+  Future<void> setLocaleChoice(AppLocaleChoice value) =>
+      _prefs.setInt(_kLocale, value.index);
 
   String? get lastPhone => _prefs.getString(_kLastPhone);
 

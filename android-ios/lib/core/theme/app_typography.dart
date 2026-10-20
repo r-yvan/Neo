@@ -5,9 +5,7 @@ import 'app_colors.dart';
 /// Satoshi is bundled with the app (see `pubspec.yaml`). No system-font
 /// fallback is permitted: [kFontFamily] is applied through [ThemeData], and
 /// every text style in the app derives from this file.
-///
-/// TEMPORARILY changed to system font until Satoshi font files are added.
-const String kFontFamily = 'Roboto';
+const String kFontFamily = 'Satoshi';
 
 /// Named weights so call sites read declaratively instead of repeating ints.
 abstract final class AppFontWeight {
@@ -28,7 +26,7 @@ class AppTypography {
     fontSize: 34,
     height: 1.14,
     fontWeight: AppFontWeight.black,
-    letterSpacing: -1.0,
+    letterSpacing: -1.2,
     color: AppColors.grey900,
   );
 
@@ -36,7 +34,7 @@ class AppTypography {
     fontSize: 28,
     height: 1.2,
     fontWeight: AppFontWeight.bold,
-    letterSpacing: -0.7,
+    letterSpacing: -0.9,
     color: AppColors.grey900,
   );
 
@@ -44,7 +42,7 @@ class AppTypography {
     fontSize: 24,
     height: 1.25,
     fontWeight: AppFontWeight.bold,
-    letterSpacing: -0.5,
+    letterSpacing: -0.7,
     color: AppColors.grey900,
   );
 
@@ -52,7 +50,7 @@ class AppTypography {
     fontSize: 20,
     height: 1.3,
     fontWeight: AppFontWeight.bold,
-    letterSpacing: -0.35,
+    letterSpacing: -0.6,
     color: AppColors.grey900,
   );
 
@@ -60,7 +58,7 @@ class AppTypography {
     fontSize: 18,
     height: 1.35,
     fontWeight: AppFontWeight.semiBold,
-    letterSpacing: -0.25,
+    letterSpacing: -0.4,
     color: AppColors.grey900,
   );
 
@@ -68,7 +66,7 @@ class AppTypography {
     fontSize: 16,
     height: 1.4,
     fontWeight: AppFontWeight.semiBold,
-    letterSpacing: -0.15,
+    letterSpacing: -0.25,
     color: AppColors.grey900,
   );
 
@@ -76,7 +74,7 @@ class AppTypography {
     fontSize: 14,
     height: 1.4,
     fontWeight: AppFontWeight.semiBold,
-    letterSpacing: -0.1,
+    letterSpacing: -0.15,
     color: AppColors.grey800,
   );
 
@@ -84,6 +82,7 @@ class AppTypography {
     fontSize: 16,
     height: 1.5,
     fontWeight: AppFontWeight.regular,
+    letterSpacing: -0.1,
     color: AppColors.grey700,
   );
 
@@ -91,6 +90,7 @@ class AppTypography {
     fontSize: 14,
     height: 1.5,
     fontWeight: AppFontWeight.regular,
+    letterSpacing: -0.05,
     color: AppColors.grey600,
   );
 
@@ -118,7 +118,7 @@ class AppTypography {
     fontSize: 11,
     height: 1.2,
     fontWeight: AppFontWeight.semiBold,
-    letterSpacing: 0.5,
+    letterSpacing: 0.1,
   );
 
   /// Tabular figures for prices and counters.

@@ -5,6 +5,8 @@
 /// type falls back to a safe default through the helpers in `parsing.dart`.
 library;
 
+import 'package:characters/characters.dart';
+import 'package:flutter/material.dart';
 import '../../core/utils/parsing.dart';
 
 // ------------------------------------------------------------------- users
@@ -80,9 +82,10 @@ class AppUser {
         .toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) {
-      return parts.first.characters.take(2).toString().toUpperCase();
+      return parts.first.characters.take(2).string.toUpperCase();
     }
-    return (parts.first.characters.take(1) + parts.last.characters.take(1))
+    return (parts.first.characters.take(1).string +
+            parts.last.characters.take(1).string)
         .toUpperCase();
   }
 
@@ -157,9 +160,10 @@ class PublicProfile {
         .toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) {
-      return parts.first.characters.take(2).toString().toUpperCase();
+      return parts.first.characters.take(2).string.toUpperCase();
     }
-    return (parts.first.characters.take(1) + parts.last.characters.take(1))
+    return (parts.first.characters.take(1).string +
+            parts.last.characters.take(1).string)
         .toUpperCase();
   }
 
@@ -225,9 +229,10 @@ class UserRef {
         .toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) {
-      return parts.first.characters.take(2).toString().toUpperCase();
+      return parts.first.characters.take(2).string.toUpperCase();
     }
-    return (parts.first.characters.take(1) + parts.last.characters.take(1))
+    return (parts.first.characters.take(1).string +
+            parts.last.characters.take(1).string)
         .toUpperCase();
   }
 }
@@ -265,8 +270,9 @@ class Equipment {
         category: EquipmentCategory.fromWire(asStringOrNull(json['category'])),
         quantity: asInt(json['quantity']),
         pricePerDay: asDouble(json['pricePerDay']),
-        depositAmount:
-            json['depositAmount'] == null ? null : asDouble(json['depositAmount']),
+        depositAmount: json['depositAmount'] == null
+            ? null
+            : asDouble(json['depositAmount']),
         location: asString(json['location']),
         latitude: json['latitude'] == null ? null : asDouble(json['latitude']),
         longitude:
@@ -310,7 +316,9 @@ class Equipment {
   final DateTime? createdAt;
 
   bool get boostIsActive =>
-      isBoosted && boostedUntil != null && boostedUntil!.isAfter(DateTime.now());
+      isBoosted &&
+      boostedUntil != null &&
+      boostedUntil!.isAfter(DateTime.now());
 
   bool get hasDeposit => (depositAmount ?? 0) > 0;
 
@@ -319,12 +327,14 @@ class Equipment {
   /// treats the availability table.
   Set<DateTime> get blockedDates => availability
       .where((AvailabilityDay d) => !d.isAvailable)
-      .map((AvailabilityDay d) => DateUtils.dateOnly(d.date))
+      .map((AvailabilityDay d) =>
+          DateTime(d.date.year, d.date.month, d.date.day))
       .toSet();
 
   Set<DateTime> get openDates => availability
       .where((AvailabilityDay d) => d.isAvailable)
-      .map((AvailabilityDay d) => DateUtils.dateOnly(d.date))
+      .map((AvailabilityDay d) =>
+          DateTime(d.date.year, d.date.month, d.date.day))
       .toSet();
 
   Equipment copyWith({
@@ -402,8 +412,8 @@ enum BookingStatus {
   final String label;
   final String hint;
 
-  static BookingStatus fromWire(String? value) => BookingStatus.values
-      .firstWhere((BookingStatus s) => s.wire == value,
+  static BookingStatus fromWire(String? value) =>
+      BookingStatus.values.firstWhere((BookingStatus s) => s.wire == value,
           orElse: () => BookingStatus.pending);
 
   bool get isTerminal =>
@@ -422,8 +432,8 @@ enum PaymentStatus {
   final String wire;
   final String label;
 
-  static PaymentStatus fromWire(String? value) => PaymentStatus.values
-      .firstWhere((PaymentStatus s) => s.wire == value,
+  static PaymentStatus fromWire(String? value) =>
+      PaymentStatus.values.firstWhere((PaymentStatus s) => s.wire == value,
           orElse: () => PaymentStatus.pending);
 }
 
@@ -465,9 +475,8 @@ class Booking {
       paymentStatus:
           PaymentStatus.fromWire(asStringOrNull(json['paymentStatus'])),
       notes: asStringOrNull(json['notes']),
-      equipment: equipmentJson.isEmpty
-          ? null
-          : Equipment.fromJson(equipmentJson),
+      equipment:
+          equipmentJson.isEmpty ? null : Equipment.fromJson(equipmentJson),
       renter: json['renter'] == null
           ? null
           : UserRef.fromJson(asMap(json['renter'])),
@@ -555,8 +564,9 @@ class BookingTimelineEntry {
         status: BookingStatus.fromWire(asStringOrNull(json['status'])),
         note: asStringOrNull(json['note']),
         createdAt: asDate(json['createdAt']),
-        actor:
-            json['actor'] == null ? null : UserRef.fromJson(asMap(json['actor'])),
+        actor: json['actor'] == null
+            ? null
+            : UserRef.fromJson(asMap(json['actor'])),
       );
 
   final String id;
@@ -601,8 +611,7 @@ class PaymentIntent {
         paymentRef: asString(json['paymentRef']),
         transactionId: asString(json['transactionId']),
         amount: asDouble(json['amount']),
-        provider:
-            MobileMoneyProvider.values.firstWhere(
+        provider: MobileMoneyProvider.values.firstWhere(
           (MobileMoneyProvider p) => p.wire == asStringOrNull(json['provider']),
           orElse: () => MobileMoneyProvider.momo,
         ),
@@ -628,8 +637,8 @@ enum TransactionType {
   final String wire;
   final String label;
 
-  static TransactionType fromWire(String? value) => TransactionType.values
-      .firstWhere((TransactionType t) => t.wire == value,
+  static TransactionType fromWire(String? value) =>
+      TransactionType.values.firstWhere((TransactionType t) => t.wire == value,
           orElse: () => TransactionType.rental);
 }
 
@@ -655,8 +664,7 @@ class Transaction {
         type: TransactionType.fromWire(asStringOrNull(json['type'])),
         provider: asStringOrNull(json['provider']),
         providerRef: asStringOrNull(json['providerRef']),
-        status:
-            PaymentStatus.fromWire(asStringOrNull(json['status'])),
+        status: PaymentStatus.fromWire(asStringOrNull(json['status'])),
         createdAt: asDateOrNull(json['createdAt']),
         booking: json['booking'] == null
             ? null
@@ -694,8 +702,8 @@ class _TransactionBooking {
           : BookingStatus.fromWire(asStringOrNull(json['status'])),
       equipmentId: asStringOrNull(json['equipmentId']) ??
           asStringOrNull(equipment['id']),
-      equipmentTitle:
-          asStringOrNull(json['equipmentTitle']) ?? asStringOrNull(equipment['title']),
+      equipmentTitle: asStringOrNull(json['equipmentTitle']) ??
+          asStringOrNull(equipment['title']),
       startDate: asDateOrNull(json['startDate']),
       endDate: asDateOrNull(json['endDate']),
     );
@@ -750,7 +758,8 @@ class EarningsBreakdown {
 }
 
 class Payout {
-  const Payout({required this.id, required this.amount, this.createdAt, this.booking});
+  const Payout(
+      {required this.id, required this.amount, this.createdAt, this.booking});
 
   factory Payout.fromJson(Map<String, dynamic> json) => Payout(
         id: asString(json['id']),
@@ -800,8 +809,7 @@ class Withdrawal {
         amount: asDouble(json['amount']),
         phone: asString(json['phone']),
         provider: asStringOrNull(json['provider']) ?? '',
-        status:
-            WithdrawalStatus.fromWire(asStringOrNull(json['status'])),
+        status: WithdrawalStatus.fromWire(asStringOrNull(json['status'])),
         note: asStringOrNull(json['note']),
         createdAt: asDateOrNull(json['createdAt']),
       );
@@ -845,8 +853,9 @@ class Review {
       fromUser: json['fromUser'] == null
           ? null
           : UserRef.fromJson(asMap(json['fromUser'])),
-      toUser:
-          json['toUser'] == null ? null : UserRef.fromJson(asMap(json['toUser'])),
+      toUser: json['toUser'] == null
+          ? null
+          : UserRef.fromJson(asMap(json['toUser'])),
       equipmentId: asStringOrNull(json['equipmentId']) ??
           asStringOrNull(equipment['id']),
       equipmentTitle: asStringOrNull(equipment['title']),
@@ -893,8 +902,9 @@ class Message {
         isRead: asBool(json['isRead']),
         bookingId: asStringOrNull(json['bookingId']),
         createdAt: asDateOrNull(json['createdAt']),
-        sender:
-            json['sender'] == null ? null : UserRef.fromJson(asMap(json['sender'])),
+        sender: json['sender'] == null
+            ? null
+            : UserRef.fromJson(asMap(json['sender'])),
         receiver: json['receiver'] == null
             ? null
             : UserRef.fromJson(asMap(json['receiver'])),
@@ -1142,9 +1152,8 @@ class PlatformConfig {
       appName: asString(json['appName'], 'Neo'),
       currency: asString(json['currency'], 'RWF'),
       commissionRate: asDouble(json['commissionRate'], 0.1),
-      boostTiers: asMapList(json['boostPricingTiers'])
-          .map(BoostTier.fromJson)
-          .toList(),
+      boostTiers:
+          asMapList(json['boostPricingTiers']).map(BoostTier.fromJson).toList(),
       paymentMethods: asMapList(json['paymentMethods'])
           .map((Map<String, dynamic> m) => asString(m['name']))
           .toList(),
@@ -1222,8 +1231,7 @@ class CategoryInfo {
 class RwandaLocation {
   const RwandaLocation({required this.province, required this.districts});
 
-  factory RwandaLocation.fromJson(Map<String, dynamic> json) =>
-      RwandaLocation(
+  factory RwandaLocation.fromJson(Map<String, dynamic> json) => RwandaLocation(
         province: asString(json['province']),
         districts: asStringList(json['districts']),
       );

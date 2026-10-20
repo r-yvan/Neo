@@ -37,24 +37,32 @@ class PaginatedListController<T> extends Notifier<PaginatedList<T>> {
   bool get isEmpty => state.items.isEmpty;
   bool get hasMore => state.hasMore;
 
+  void _publish() {
+    state = PaginatedList<T>(items: state.items, meta: state.meta);
+  }
+
   Future<void> loadInitial() async {
     error = null;
+    initialised = false;
+    _publish();
     try {
       state = await _fetch(1, pageSize);
       initialised = true;
     } on ApiException catch (e) {
       error = e.message;
       initialised = true;
+      _publish();
     }
   }
 
   Future<void> refresh() async {
     isRefreshing = true;
+    error = null;
     try {
       state = await _fetch(1, pageSize);
-      error = null;
     } on ApiException catch (e) {
       error = e.message;
+      _publish();
     } finally {
       isRefreshing = false;
     }
@@ -63,13 +71,16 @@ class PaginatedListController<T> extends Notifier<PaginatedList<T>> {
   Future<void> loadMore() async {
     if (isLoadingMore || !state.hasMore || error != null) return;
     isLoadingMore = true;
+    _publish();
     final int next = state.page + 1;
     try {
       state = state.merge(await _fetch(next, pageSize));
     } on ApiException catch (e) {
       error = e.message;
+      _publish();
     } finally {
       isLoadingMore = false;
+      _publish();
     }
   }
 

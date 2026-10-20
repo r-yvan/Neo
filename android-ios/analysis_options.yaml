@@ -18,5 +18,6 @@ analyzer:
     - android/**
     - ios/**
     - web/**
+    - linux/**
   errors:
     invalid_annotation_target: ignore

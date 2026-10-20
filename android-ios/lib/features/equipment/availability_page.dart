@@ -193,7 +193,9 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                       rowHeight: 44,
                       daysOfWeekHeight: 30,
                       startingDayOfWeek: StartingDayOfWeek.monday,
-                      availableCalendarFormats: const <CalendarFormat>[],
+                      availableCalendarFormats: const <CalendarFormat, String>{
+              CalendarFormat.month: 'Month',
+            },
                       eventLoader: (DateTime day) =>
                           _blocked.contains(Dates.dayOnly(day)) ||
                                   _selected.contains(Dates.dayOnly(day))

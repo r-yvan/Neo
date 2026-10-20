@@ -106,7 +106,8 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
     setState(() => _busy = true);
     try {
       final PaymentsRepository repo = ref.read(paymentsRepositoryProvider);
-      final PaymentIntent intent = await repo.initiate(booking.id, provider);
+      final PaymentIntent intent =
+          await repo.initiate(bookingId: booking.id, provider: provider);
       await repo.confirm(intent.paymentRef);
       if (!mounted) return;
       setState(() => _busy = false);

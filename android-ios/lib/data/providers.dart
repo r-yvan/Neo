@@ -9,9 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/app_config.dart';
+import '../core/l10n/app_locale.dart';
+import '../core/l10n/strings.dart';
 import '../core/network/api_client.dart';
 import '../core/storage/app_preferences.dart';
 import '../core/storage/token_store.dart';
+import '../core/utils/formatters.dart';
 import 'models/models.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/booking_repository.dart';
@@ -417,6 +420,38 @@ class ThemeModeController extends Notifier<ThemeMode> {
       ThemeMode.dark => 2,
       ThemeMode.system => 0,
     });
+  }
+}
+
+// ---------------------------------------------------------------- language
+
+/// App language (system / English / Kinyarwanda). Reads and writes the
+/// persisted preference; every change also swaps the global translation
+/// table ([L10n.i]) and the date formatters, then repaints the app because
+/// [NeoApp] watches this provider and rebuilds [MaterialApp].
+final NotifierProvider<LanguageController, AppLocaleChoice> languageProvider =
+    NotifierProvider<LanguageController, AppLocaleChoice>(
+        LanguageController.new);
+
+class LanguageController extends Notifier<AppLocaleChoice> {
+  @override
+  AppLocaleChoice build() {
+    final AppLocaleChoice choice = AppLocaleChoice.fromStorageIndex(
+        ref.read(appPreferencesProvider).localeChoice.storageIndex);
+    _apply(choice);
+    return choice;
+  }
+
+  Future<void> set(AppLocaleChoice choice) async {
+    _apply(choice);
+    state = choice;
+    await ref.read(appPreferencesProvider).setLocaleChoice(choice);
+  }
+
+  void _apply(AppLocaleChoice choice) {
+    final String code = AppLocaleChoice.code(choice);
+    L10n.setLanguage(code);
+    Dates.setLocale(code);
   }
 }
 

@@ -1,7 +1,7 @@
 /// Design tokens for the Neo visual system.
 ///
 /// Rules enforced here:
-///  * Exactly one accent colour — [AppColors.accent] (#0A84FF).
+///  * Exactly one accent colour — [AppColors.accent] (coral pink-red).
 ///  * Every neutral is a true grey (no colour cast whatsoever).
 ///  * British spelling for "grey" everywhere.
 library;
@@ -13,16 +13,16 @@ class AppColors {
   const AppColors._();
 
   // ---------------------------------------------------------------- accent
-  /// The single brand accent. Used for primary actions, active states,
-  /// progress indicators, focus rings and links. Nothing else.
-  static const Color accent = Color(0xFF0A84FF);
+  /// The single brand accent — punchy pink-red coral. Used for primary
+  /// actions, active states, progress indicators, focus rings and links.
+  static const Color accent = Color(0xFFF4442E);
 
   /// Accent pressed / active state.
-  static const Color accentPressed = Color(0xFF0064D2);
+  static const Color accentPressed = Color(0xFFD63320);
 
   /// Very low-alpha accent wash for selected chips and soft backgrounds.
-  static const Color accentSoft = Color(0x140A84FF);
-  static const Color accentSofter = Color(0x0A0A84FF);
+  static const Color accentSoft = Color(0x14F4442E);
+  static const Color accentSofter = Color(0x0AF4442E);
 
   // --------------------------------------------------------------- greys
   // Pure neutral ramp, light to dark.
@@ -125,7 +125,7 @@ class AppShadows {
 
   static const List<BoxShadow> accent = [
     BoxShadow(
-      color: Color(0x330A84FF),
+      color: Color(0x33F4442E),
       blurRadius: 20,
       offset: Offset(0, 8),
       spreadRadius: -6,

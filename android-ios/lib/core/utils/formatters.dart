@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart';
 
+import '../l10n/strings.dart';
+
 /// Rwandan-franc formatting and date helpers.
 ///
 /// The platform is `RWF` with no minor unit in practice, so amounts are shown
@@ -35,15 +37,40 @@ abstract final class Money {
   }
 }
 
+/// Language-aware date formatting. `setLocale` rebuilds the cached formatters
+/// in the requested locale; where the intl package has no calendar data for a
+/// language (today: fr vs en, rw may fall back) it silently keeps English.
 abstract final class Dates {
-  static final DateFormat _day = DateFormat('d MMM');
-  static final DateFormat _dayYear = DateFormat('d MMM yyyy');
-  static final DateFormat _weekday = DateFormat('EEE');
-  static final DateFormat _weekdayLong = DateFormat('EEEE');
-  static final DateFormat _monthYear = DateFormat('MMMM yyyy');
-  static final DateFormat _monthShort = DateFormat('MMM');
-  static final DateFormat _time = DateFormat('HH:mm');
-  static final DateFormat _iso = DateFormat('yyyy-MM-dd');
+  static String _locale = 'en';
+
+  static DateFormat _day = DateFormat('d MMM', _locale);
+  static DateFormat _dayYear = DateFormat('d MMM yyyy', _locale);
+  static DateFormat _weekday = DateFormat('EEE', _locale);
+  static DateFormat _weekdayLong = DateFormat('EEEE', _locale);
+  static DateFormat _monthYear = DateFormat('MMMM yyyy', _locale);
+  static DateFormat _monthShort = DateFormat('MMM', _locale);
+  static DateFormat _time = DateFormat('HH:mm');
+  static DateFormat _iso = DateFormat('yyyy-MM-dd');
+
+  /// Rebuilds every formatter in the preferred language. Safe to call from the
+  /// language controller before the first frame paints.
+  static void setLocale(String languageCode) {
+    final String requested = languageCode == 'rw' ? 'rw' : 'en';
+    try {
+      _locale = requested;
+      _day = DateFormat('d MMM', _locale);
+      _dayYear = DateFormat('d MMM yyyy', _locale);
+      _weekday = DateFormat('EEE', _locale);
+      _weekdayLong = DateFormat('EEEE', _locale);
+      _monthYear = DateFormat('MMMM yyyy', _locale);
+      _monthShort = DateFormat('MMM', _locale);
+      _time = DateFormat('HH:mm');
+      _iso = DateFormat('yyyy-MM-dd');
+    } catch (_) {
+      // intl has no calendar data for this language — keep English symbols.
+      _locale = 'en';
+    }
+  }
 
   static String iso(DateTime date) => _iso.format(date);
 
@@ -77,10 +104,10 @@ abstract final class Dates {
   static String relative(DateTime? date) {
     if (date == null) return '';
     final Duration diff = DateTime.now().difference(date);
-    if (diff.inSeconds < 60) return 'just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    if (diff.inSeconds < 60) return L10n.i.relJustNow;
+    if (diff.inMinutes < 60) return L10n.i.relMinutesAgo(diff.inMinutes);
+    if (diff.inHours < 24) return L10n.i.relHoursAgo(diff.inHours);
+    if (diff.inDays < 7) return L10n.i.relDaysAgo(diff.inDays);
     if (diff.inDays < 365) return _day.format(date);
     return _dayYear.format(date);
   }

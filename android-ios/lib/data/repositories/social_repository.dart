@@ -97,17 +97,17 @@ class ReviewsRepository {
       })));
 
   Future<PaginatedList<Review>> given({int page = 1, int limit = 20}) async =>
-      _page(await _get(ApiPaths.reviewsMy,
+      _reviewPage(await _get(ApiPaths.reviewsMy,
           query: {'page': page, 'limit': limit}));
 
   Future<PaginatedList<Review>> forEquipment(String equipmentId,
           {int page = 1, int limit = 20}) async =>
-      _page(await _get(ApiPaths.reviewsForEquipment(equipmentId),
+      _reviewPage(await _get(ApiPaths.reviewsForEquipment(equipmentId),
           query: {'page': page, 'limit': limit}));
 
   Future<PaginatedList<Review>> forUser(String userId,
           {int page = 1, int limit = 20}) async =>
-      _page(await _get(ApiPaths.reviewsForUser(userId),
+      _reviewPage(await _get(ApiPaths.reviewsForUser(userId),
           query: {'page': page, 'limit': limit}));
 
   Future<Review> update(String id, {int? rating, String? comment}) async =>

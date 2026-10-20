@@ -253,7 +253,9 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
             rangeStartDay: _start,
             rangeEndDay: _end,
             startingDayOfWeek: StartingDayOfWeek.monday,
-            availableCalendarFormats: const <CalendarFormat>[],
+            availableCalendarFormats: const <CalendarFormat, String>{
+              CalendarFormat.month: 'Month',
+            },
             calendarStyle: CalendarStyle(
               outsideDaysVisible: false,
               rangeHighlightColor: AppColors.accent,

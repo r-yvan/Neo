@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Token + lightweight session persistence.
 ///
@@ -32,6 +34,12 @@ class TokenStore {
   bool get hasSession => (_access?.isNotEmpty ?? false);
 
   Future<void> read() async {
+    if (kIsWeb) {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      _access = prefs.getString(_kAccess);
+      _refresh = prefs.getString(_kRefresh);
+      return;
+    }
     _access = await _storage.read(key: _kAccess);
     _refresh = await _storage.read(key: _kRefresh);
   }
@@ -42,18 +50,35 @@ class TokenStore {
   }) async {
     _access = accessToken;
     _refresh = refreshToken;
+    if (kIsWeb) {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kAccess, accessToken);
+      await prefs.setString(_kRefresh, refreshToken);
+      return;
+    }
     await _storage.write(key: _kAccess, value: accessToken);
     await _storage.write(key: _kRefresh, value: refreshToken);
   }
 
   Future<void> updateAccess(String accessToken) async {
     _access = accessToken;
+    if (kIsWeb) {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kAccess, accessToken);
+      return;
+    }
     await _storage.write(key: _kAccess, value: accessToken);
   }
 
   Future<void> clear() async {
     _access = null;
     _refresh = null;
+    if (kIsWeb) {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_kAccess);
+      await prefs.remove(_kRefresh);
+      return;
+    }
     await _storage.delete(key: _kAccess);
     await _storage.delete(key: _kRefresh);
   }

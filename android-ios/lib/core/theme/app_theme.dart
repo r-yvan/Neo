@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -30,9 +31,8 @@ abstract final class AppTheme {
       brightness: brightness,
       primary: AppColors.accent,
       onPrimary: Colors.white,
-      primaryContainer: isDark
-          ? const Color(0xFF10243A)
-          : AppColors.accentSoft,
+      primaryContainer:
+          isDark ? const Color(0xFF3A1310) : AppColors.accentSoft,
       onPrimaryContainer: isDark ? AppColors.grey100 : AppColors.grey900,
       secondary: AppColors.accent,
       onSecondary: Colors.white,
@@ -49,12 +49,10 @@ abstract final class AppTheme {
       surfaceContainerLowest: surface,
       surfaceContainerLow: raised,
       surfaceContainer: raised,
-      surfaceContainerHigh: isDark
-          ? const Color(0xFF2A2A2A)
-          : AppColors.grey150,
-      surfaceContainerHighest: isDark
-          ? const Color(0xFF303030)
-          : AppColors.grey200,
+      surfaceContainerHigh:
+          isDark ? const Color(0xFF2A2A2A) : AppColors.grey150,
+      surfaceContainerHighest:
+          isDark ? const Color(0xFF303030) : AppColors.grey200,
       onSurfaceVariant: body,
       outline: border,
       outlineVariant: border,
@@ -78,7 +76,6 @@ abstract final class AppTheme {
       splashFactory: InkSparkle.splashFactory,
       visualDensity: VisualDensity.standard,
       materialTapTargetSize: MaterialTapTargetSize.padded,
-
       appBarTheme: AppBarTheme(
         backgroundColor: background,
         surfaceTintColor: Colors.transparent,
@@ -87,11 +84,9 @@ abstract final class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: text.titleLarge,
-        systemOverlayStyle: isDark
-            ? SystemUiOverlayStyle.light
-            : SystemUiOverlayStyle.dark,
+        systemOverlayStyle:
+            isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       ),
-
       cardTheme: CardThemeData(
         color: surface,
         surfaceTintColor: Colors.transparent,
@@ -102,15 +97,12 @@ abstract final class AppTheme {
           side: BorderSide(color: border),
         ),
       ),
-
       dividerTheme: DividerThemeData(
         color: border,
         thickness: 1,
         space: 1,
       ),
-
       iconTheme: IconThemeData(color: body, size: 22),
-
       chipTheme: ChipThemeData(
         backgroundColor: surface,
         selectedColor: AppColors.accentSoft,
@@ -125,7 +117,6 @@ abstract final class AppTheme {
         shape: const RoundedRectangleBorder(borderRadius: AppRadii.pillAll),
         showCheckmark: false,
       ),
-
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.accent,
@@ -142,7 +133,6 @@ abstract final class AppTheme {
           ),
         ),
       ),
-
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: strong,
@@ -155,7 +145,6 @@ abstract final class AppTheme {
           ),
         ),
       ),
-
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.accent,
@@ -169,7 +158,6 @@ abstract final class AppTheme {
           ),
         ),
       ),
-
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
@@ -205,19 +193,18 @@ abstract final class AppTheme {
           borderSide: const BorderSide(color: AppColors.danger, width: 1.6),
         ),
       ),
-
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: surface,
         surfaceTintColor: Colors.transparent,
         modalBackgroundColor: surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.xl)),
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(AppRadii.xl)),
         ),
         showDragHandle: true,
         dragHandleColor: border,
         dragHandleSize: const Size(40, 4),
       ),
-
       dialogTheme: DialogThemeData(
         backgroundColor: surface,
         surfaceTintColor: Colors.transparent,
@@ -228,7 +215,6 @@ abstract final class AppTheme {
           borderRadius: AppRadii.xlAll,
         ),
       ),
-
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
         surfaceTintColor: Colors.transparent,
@@ -253,7 +239,6 @@ abstract final class AppTheme {
           );
         }),
       ),
-
       tabBarTheme: TabBarThemeData(
         labelColor: AppColors.accent,
         unselectedLabelColor: muted,
@@ -269,7 +254,6 @@ abstract final class AppTheme {
           fontWeight: AppFontWeight.medium,
         ),
       ),
-
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: isDark ? AppColors.grey200 : AppColors.grey900,
@@ -282,13 +266,11 @@ abstract final class AppTheme {
         insetPadding: const EdgeInsets.all(AppSpacing.md),
         elevation: 6,
       ),
-
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: AppColors.accent,
         linearTrackColor: AppColors.grey200,
         circularTrackColor: AppColors.grey200,
       ),
-
       sliderTheme: SliderThemeData(
         activeTrackColor: AppColors.accent,
         inactiveTrackColor: isDark ? AppColors.grey700 : AppColors.grey200,
@@ -296,7 +278,6 @@ abstract final class AppTheme {
         overlayColor: AppColors.accentSoft,
         trackHeight: 4,
       ),
-
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.selected)
@@ -312,7 +293,6 @@ abstract final class AppTheme {
           isDark ? AppColors.grey700 : AppColors.grey300,
         ),
       ),
-
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.selected)
@@ -323,7 +303,6 @@ abstract final class AppTheme {
         side: BorderSide(color: isDark ? AppColors.grey600 : AppColors.grey300),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       ),
-
       listTileTheme: ListTileThemeData(
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
@@ -333,13 +312,11 @@ abstract final class AppTheme {
         subtitleTextStyle: text.bodySmall,
         iconColor: muted,
       ),
-
       textSelectionTheme: TextSelectionThemeData(
         cursorColor: AppColors.accent,
         selectionColor: AppColors.accentSoft,
         selectionHandleColor: AppColors.accent,
       ),
-
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
           color: isDark ? AppColors.grey700 : AppColors.grey900,
@@ -347,7 +324,6 @@ abstract final class AppTheme {
         ),
         textStyle: text.bodySmall!.copyWith(color: Colors.white),
       ),
-
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),

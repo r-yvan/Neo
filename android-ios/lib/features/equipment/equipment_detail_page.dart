@@ -16,6 +16,7 @@ import '../chat/chat_page.dart';
 import '../profile/public_profile_page.dart';
 import '../reviews/reviews_page.dart';
 import '../reviews/write_review_sheet.dart';
+import 'equipment_form_page.dart';
 import 'widgets/equipment_card.dart';
 
 /// Single listing view: carousel, availability calendar, price breakdown and
@@ -53,12 +54,12 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
       final Equipment item =
           await ref.read(equipmentRepositoryProvider).byId(widget.equipmentId);
       final List<FavoriteEntry> saved =
-          await ref.read(favoritesRepositoryProvider).list(limit: 100);
+          (await ref.read(favoritesRepositoryProvider).list(limit: 100)).items;
       if (!mounted) return;
       setState(() {
         _item = item;
         _favorite =
-            saved.items.any((FavoriteEntry f) => f.equipment.id == item.id);
+            saved.any((FavoriteEntry f) => f.equipment.id == item.id);
         _error = null;
         _loading = false;
       });
@@ -396,7 +397,9 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
         rangeStartDay: _rangeStart,
         rangeEndDay: _rangeEnd,
         startingDayOfWeek: StartingDayOfWeek.monday,
-        availableCalendarFormats: const <CalendarFormat>[],
+        availableCalendarFormats: const <CalendarFormat, String>{
+              CalendarFormat.month: 'Month',
+            },
         calendarStyle: CalendarStyle(
           outsideDaysVisible: false,
           rangeHighlightColor: AppColors.accent,

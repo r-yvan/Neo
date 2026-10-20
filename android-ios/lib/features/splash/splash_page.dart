@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/l10n/strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 
@@ -26,7 +27,7 @@ class SplashPage extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xxs),
             Text(
-              'Event equipment, ready when you are',
+              L10n.i.splashTagline,
               style: AppTypography.bodyMedium.copyWith(color: AppColors.grey400),
             ),
           ],
@@ -51,7 +52,7 @@ class BrandMark extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.accent, Color(0xFF5AB0FF)],
+          colors: [AppColors.accent, Color(0xFFFF9C8A)],
         ),
         borderRadius: BorderRadius.circular(size * 0.3),
         boxShadow: AppShadows.accent,
