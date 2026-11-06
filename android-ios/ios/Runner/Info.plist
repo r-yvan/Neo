@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Neo uses your location to show equipment owners and renters near you. Others only ever see an approximate area.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Neo uses the camera to photograph your equipment and profile picture.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Neo lets you pick photos of your equipment and profile picture from your library.</string>
 </dict>
 </plist>

@@ -10,6 +10,7 @@ import '../../../data/providers.dart';
 import '../../../data/repositories/equipment_repository.dart';
 import '../../equipment/equipment_detail_page.dart';
 import '../../equipment/widgets/equipment_card.dart';
+import '../../map/nearby_map_page.dart';
 
 /// `GET /equipment/popular` — most booked / best rated right now.
 final AutoDisposeFutureProvider<List<Equipment>> popularEquipmentProvider =
@@ -49,6 +50,10 @@ class DiscoveryRails extends ConsumerWidget {
           subtitle: s.exploreNearbySub,
           icon: Icons.near_me_rounded,
           data: ref.watch(nearbyEquipmentProvider),
+          actionLabel: s.mapOpen,
+          onAction: () => Navigator.of(context).push<void>(
+            MaterialPageRoute<void>(builder: (_) => const NearbyMapPage()),
+          ),
         ),
       ],
     );
@@ -61,10 +66,14 @@ class _Rail extends StatelessWidget {
     required this.icon,
     required this.data,
     this.subtitle,
+    this.actionLabel,
+    this.onAction,
   });
 
   final String title;
   final String? subtitle;
+  final String? actionLabel;
+  final VoidCallback? onAction;
   final IconData icon;
   final AsyncValue<List<Equipment>> data;
 
@@ -94,6 +103,17 @@ class _Rail extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(subtitle!, style: theme.textTheme.bodySmall),
                 ],
+                const Spacer(),
+                if (actionLabel != null)
+                  TextButton.icon(
+                    onPressed: onAction,
+                    icon: const Icon(Icons.map_outlined, size: 16),
+                    label: Text(actionLabel!),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.accent,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
               ],
             ),
           ),

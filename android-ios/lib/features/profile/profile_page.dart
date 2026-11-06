@@ -12,6 +12,8 @@ import '../../data/providers.dart';
 import '../common/language_picker.dart';
 import '../common/photo_picker.dart';
 import '../admin/admin_console_page.dart';
+import '../favorites/favorites_page.dart';
+import '../map/nearby_map_page.dart';
 import '../notifications/notification_settings_page.dart';
 import '../payments/payment_history_page.dart';
 import '../trust/my_reports_page.dart';
@@ -23,10 +25,9 @@ import '../shell/root_shell.dart';
 /// Everything writes through the API: avatar URL, profile fields, password,
 /// national-ID verification and the OWNER role opt-in.
 class ProfilePage extends ConsumerWidget {
-  const ProfilePage({super.key, this.embedded = false});
+  const ProfilePage({super.key});
 
   /// When rendered inside the shell the app bar is owned by [RootShell].
-  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,18 +36,24 @@ class ProfilePage extends ConsumerWidget {
     final S s = L10n.i;
     final ThemeData theme = Theme.of(context);
 
-    if (session.stage == SessionStage.loading) {
-      return const Center(child: NeoLoading());
-    }
-    if (user == null) {
-      return Center(
-        child: NeoErrorState(message: s.profileNotSignedIn, onRetry: null),
+    if (session.stage == SessionStage.loading || user == null) {
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(title: Text(s.profileTitle)),
+        body: session.stage == SessionStage.loading
+            ? const Center(child: NeoLoading())
+            : Center(
+                child: NeoErrorState(
+                    message: s.profileNotSignedIn, onRetry: null),
+              ),
       );
     }
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: embedded ? null : AppBar(title: Text(s.profileTitle)),
+      // Always pushed on top of the shell; the app bar keeps the content clear
+      // of the status bar on edge-to-edge devices.
+      appBar: AppBar(title: Text(s.profileTitle)),
       body: RefreshIndicator(
         color: AppColors.accent,
         onRefresh: () async {
@@ -60,9 +67,9 @@ class ProfilePage extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(
             AppSpacing.lg,
-            embedded ? AppSpacing.md : 0,
+            AppSpacing.xs,
             AppSpacing.lg,
-            AppSpacing.xxl,
+            AppSpacing.xxl + MediaQuery.paddingOf(context).bottom,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -557,7 +564,12 @@ class _ActivityCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final S s = L10n.i;
-    final shell = context;
+    // Back to the shell, then switch tab.
+    void goToTab(int tab) {
+      openShellTab(context, tab);
+      Navigator.of(context).popUntil((Route<dynamic> r) => r.isFirst);
+    }
+
     return NeoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -567,19 +579,26 @@ class _ActivityCard extends ConsumerWidget {
           _Row(
             icon: Icons.receipt_long_outlined,
             title: s.actMyBookings,
-            onTap: () => openShellTab(shell, ShellTab.bookings),
+            onTap: () => goToTab(ShellTab.bookings),
           ),
           const _Divider(),
           _Row(
             icon: Icons.favorite_outline_rounded,
             title: s.actSavedListings,
-            onTap: () => openShellTab(shell, ShellTab.saved),
+            onTap: () => _push(context, const FavoritesPage()),
           ),
           const _Divider(),
           _Row(
             icon: Icons.storefront_outlined,
             title: s.actOwnerDashboard,
-            onTap: () => openShellTab(shell, ShellTab.owner),
+            onTap: () => goToTab(ShellTab.owner),
+          ),
+          const _Divider(),
+          _Row(
+            icon: Icons.map_outlined,
+            title: s.mapTitle,
+            subtitle: s.mapMeSubtitle,
+            onTap: () => _push(context, const NearbyMapPage()),
           ),
           const _Divider(),
           _Row(

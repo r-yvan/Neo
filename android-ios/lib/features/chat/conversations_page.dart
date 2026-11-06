@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/strings.dart';
 import '../../core/config/app_config.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
@@ -12,6 +13,7 @@ import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/social_repository.dart';
+import '../shell/profile_button.dart';
 import '../../data/repositories/users_repository.dart' show PaginatedList;
 
 /// Inbox: every conversation the user is part of, newest activity first.
@@ -92,13 +94,15 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Text('Messages', style: theme.textTheme.displayMedium),
+                        child: Text(L10n.i.navMessages, style: theme.textTheme.displayMedium),
                       ),
                       NeoIconButton(
                         icon: Icons.refresh_rounded,
                         tooltip: 'Refresh',
                         onPressed: _load,
                       ),
+                      const SizedBox(width: AppSpacing.xs),
+                      const ProfileAvatarButton(),
                     ],
                   ),
                 ),

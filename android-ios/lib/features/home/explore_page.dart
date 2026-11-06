@@ -17,6 +17,8 @@ import '../equipment/equipment_detail_page.dart';
 import '../equipment/widgets/equipment_card.dart';
 import '../notifications/notifications_page.dart';
 import 'widgets/discovery_rails.dart';
+import '../map/nearby_map_page.dart';
+import '../shell/profile_button.dart';
 
 /// Home / Explore.
 ///
@@ -178,6 +180,8 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
               ),
             ),
           ),
+          const SizedBox(width: AppSpacing.xs),
+          const ProfileAvatarButton(),
         ],
       ),
     );
@@ -209,6 +213,14 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
                 hintText: L10n.i.exploreSearchHint,
                 prefixIcon: const Icon(Icons.search_rounded, size: 20),
               ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          _SquareButton(
+            icon: Icons.map_outlined,
+            tooltip: L10n.i.mapTitle,
+            onTap: () => Navigator.of(context).push<void>(
+              MaterialPageRoute<void>(builder: (_) => const NearbyMapPage()),
             ),
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -427,6 +439,38 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
       EquipmentCategory.decorations => s.catDecor,
       EquipmentCategory.other => s.catOther,
     };
+  }
+}
+
+class _SquareButton extends StatelessWidget {
+  const _SquareButton({required this.icon, required this.tooltip, required this.onTap});
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: AppRadii.mdAll,
+        child: InkWell(
+          borderRadius: AppRadii.mdAll,
+          onTap: onTap,
+          child: Container(
+            height: 54,
+            width: 54,
+            decoration: BoxDecoration(
+              borderRadius: AppRadii.mdAll,
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
+            ),
+            child: Icon(icon, size: 21),
+          ),
+        ),
+      ),
+    );
   }
 }
 

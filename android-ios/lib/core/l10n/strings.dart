@@ -597,6 +597,52 @@ abstract class S {
   String adminReportedBy(String name);
   String adminOpenedBy(String name);
   String adminBy(String name);
+
+  // -------- Nearby map
+  String get mapTitle;
+  String get mapOpen;
+  String get mapLayerAll;
+  String get mapLayerLenders;
+  String get mapLayerBorrowers;
+  String get mapLender;
+  String get mapBorrower;
+  String get mapSearchArea;
+  String get mapRecenter;
+  String get mapRadius;
+  String get mapLoading;
+  String get mapEmptyTitle;
+  String get mapEmptyBody;
+  String get mapUsingDefault;
+  String get mapLocationOff;
+  String get mapLocationDenied;
+  String get mapOpenSettings;
+  String get mapFromPrice;
+  String get mapViewProfile;
+  String get mapMessage;
+  String get mapLookingFor;
+  String get mapApproxArea;
+  String get mapMeTitle;
+  String get mapMeSubtitle;
+  String get mapMeSwitch;
+  String get mapMePrivacy;
+  String get mapMeNote;
+  String get mapMeNoteHint;
+  String get mapMeArea;
+  String get mapMeAreaHint;
+  String get mapMeUseLocation;
+  String get mapMeLocationSet;
+  String get mapMeNoLocation;
+  String get mapMeRemove;
+  String get mapMeSaved;
+  String get mapMeRemoved;
+  String get mapMeYou;
+  String get mapMeVisible;
+  String get mapMeHidden;
+  String get mapAttribution;
+  String mapKmAway(double km);
+  String mapListings(int n);
+  String mapRadiusKm(int km);
+  String mapActive(String when);
 }
 
 /// English source strings.
@@ -1805,6 +1851,100 @@ class SEn implements S {
   @override
   String adminBy(String name) =>
       'by $name';
+
+  // -------- Nearby map
+  @override
+  String get mapTitle => 'Nearby map';
+  @override
+  String get mapOpen => 'Map';
+  @override
+  String get mapLayerAll => 'All';
+  @override
+  String get mapLayerLenders => 'Lenders';
+  @override
+  String get mapLayerBorrowers => 'Borrowers';
+  @override
+  String get mapLender => 'Lender';
+  @override
+  String get mapBorrower => 'Borrower';
+  @override
+  String get mapSearchArea => 'Search this area';
+  @override
+  String get mapRecenter => 'My location';
+  @override
+  String get mapRadius => 'Radius';
+  @override
+  String get mapLoading => 'Finding people near you…';
+  @override
+  String get mapEmptyTitle => 'No one here yet';
+  @override
+  String get mapEmptyBody => 'Try a wider radius or move the map to another area.';
+  @override
+  String get mapUsingDefault => 'Showing Kigali. Turn on location to see who is near you.';
+  @override
+  String get mapLocationOff => 'Location services are off';
+  @override
+  String get mapLocationDenied => 'Location permission was denied';
+  @override
+  String get mapOpenSettings => 'Settings';
+  @override
+  String get mapFromPrice => 'from';
+  @override
+  String get mapViewProfile => 'Profile';
+  @override
+  String get mapMessage => 'Message';
+  @override
+  String get mapLookingFor => 'Looking for';
+  @override
+  String get mapApproxArea => 'Approximate area';
+  @override
+  String get mapMeTitle => 'Show me on the map';
+  @override
+  String get mapMeSubtitle => 'Let nearby lenders find you when you need equipment';
+  @override
+  String get mapMeSwitch => 'Visible to lenders nearby';
+  @override
+  String get mapMePrivacy => 'Others only see an approximate area (about 1 km), never your exact spot. You disappear automatically after 30 days unless you refresh your location.';
+  @override
+  String get mapMeNote => 'What do you need? (optional)';
+  @override
+  String get mapMeNoteHint => 'e.g. 100 chairs and a tent for Saturday';
+  @override
+  String get mapMeArea => 'Area name (optional)';
+  @override
+  String get mapMeAreaHint => 'e.g. Kigali - Remera';
+  @override
+  String get mapMeUseLocation => 'Use my current location';
+  @override
+  String get mapMeLocationSet => 'Location saved';
+  @override
+  String get mapMeNoLocation => 'No location shared yet';
+  @override
+  String get mapMeRemove => 'Remove me from the map';
+  @override
+  String get mapMeSaved => 'Map settings saved';
+  @override
+  String get mapMeRemoved => 'Your location was deleted';
+  @override
+  String get mapMeYou => 'You';
+  @override
+  String get mapMeVisible => 'You are visible';
+  @override
+  String get mapMeHidden => 'You are hidden';
+  @override
+  String get mapAttribution => 'Map data';
+  @override
+  String mapKmAway(double km) =>
+      '${km < 1 ? '<1' : km.toStringAsFixed(km < 10 ? 1 : 0)} km away';
+  @override
+  String mapListings(int n) =>
+      n == 1 ? '1 listing' : '$n listings';
+  @override
+  String mapRadiusKm(int km) =>
+      '$km km';
+  @override
+  String mapActive(String when) =>
+      'Active $when';
 }
 
 /// Kinyarwanda translations.
@@ -3016,6 +3156,100 @@ class SRw implements S {
   @override
   String adminBy(String name) =>
       'na $name';
+
+  // -------- Nearby map
+  @override
+  String get mapTitle => 'Ikarita y’abari hafi';
+  @override
+  String get mapOpen => 'Ikarita';
+  @override
+  String get mapLayerAll => 'Bose';
+  @override
+  String get mapLayerLenders => 'Abakodesha';
+  @override
+  String get mapLayerBorrowers => 'Abakodesheje';
+  @override
+  String get mapLender => 'Ukodesha';
+  @override
+  String get mapBorrower => 'Ukeneye';
+  @override
+  String get mapSearchArea => 'Shakisha aha hantu';
+  @override
+  String get mapRecenter => 'Aho ndi';
+  @override
+  String get mapRadius => 'Intera';
+  @override
+  String get mapLoading => 'Turashakisha abari hafi yawe…';
+  @override
+  String get mapEmptyTitle => 'Nta muntu uhari';
+  @override
+  String get mapEmptyBody => 'Ongera intera cyangwa wimurire ikarita ahandi.';
+  @override
+  String get mapUsingDefault => 'Turerekana Kigali. Fungura aho uherereye urebe abari hafi yawe.';
+  @override
+  String get mapLocationOff => 'Serivisi y’aho uherereye irafunze';
+  @override
+  String get mapLocationDenied => 'Uruhushya rw’aho uherereye rwanzwe';
+  @override
+  String get mapOpenSettings => 'Igenamiterere';
+  @override
+  String get mapFromPrice => 'guhera';
+  @override
+  String get mapViewProfile => 'Umwirondoro';
+  @override
+  String get mapMessage => 'Andika';
+  @override
+  String get mapLookingFor => 'Arashaka';
+  @override
+  String get mapApproxArea => 'Agace kegereye';
+  @override
+  String get mapMeTitle => 'Nyerekana ku ikarita';
+  @override
+  String get mapMeSubtitle => 'Reka abakodesha bari hafi bakubone igihe ukeneye ibikoresho';
+  @override
+  String get mapMeSwitch => 'Abakodesha bari hafi barambona';
+  @override
+  String get mapMePrivacy => 'Abandi babona agace kegereye gusa (nka km 1), ntibabona aho uri neza. Uvaho nyuma y’iminsi 30 keretse uvuguruye aho uri.';
+  @override
+  String get mapMeNote => 'Ukeneye iki? (si ngombwa)';
+  @override
+  String get mapMeNoteHint => 'urugero: intebe 100 n’ihema ku wa Gatandatu';
+  @override
+  String get mapMeArea => 'Izina ry’agace (si ngombwa)';
+  @override
+  String get mapMeAreaHint => 'urugero: Kigali - Remera';
+  @override
+  String get mapMeUseLocation => 'Koresha aho ndi ubu';
+  @override
+  String get mapMeLocationSet => 'Aho uri habitswe';
+  @override
+  String get mapMeNoLocation => 'Nta hantu urasangiza';
+  @override
+  String get mapMeRemove => 'Nkura ku ikarita';
+  @override
+  String get mapMeSaved => 'Igenamiterere ry’ikarita ryabitswe';
+  @override
+  String get mapMeRemoved => 'Aho wari uri hasibwe';
+  @override
+  String get mapMeYou => 'Wowe';
+  @override
+  String get mapMeVisible => 'Uragaragara';
+  @override
+  String get mapMeHidden => 'Ntugaragara';
+  @override
+  String get mapAttribution => 'Amakuru y’ikarita';
+  @override
+  String mapKmAway(double km) =>
+      'kuri km ${km < 1 ? '<1' : km.toStringAsFixed(km < 10 ? 1 : 0)}';
+  @override
+  String mapListings(int n) =>
+      'ibikoresho $n';
+  @override
+  String mapRadiusKm(int km) =>
+      'km $km';
+  @override
+  String mapActive(String when) =>
+      'Yagaragaye $when';
 }
 
 /// Registry + global accessor. Non-widget code (repositories, validators,

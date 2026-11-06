@@ -20,6 +20,7 @@ import 'repositories/admin_repository.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/booking_repository.dart';
 import 'repositories/equipment_repository.dart';
+import 'repositories/map_repository.dart';
 import 'repositories/media_repository.dart';
 import 'repositories/social_repository.dart';
 import 'repositories/users_repository.dart';
@@ -172,6 +173,17 @@ final Provider<MediaRepository> mediaRepositoryProvider =
     Provider<MediaRepository>((Ref ref) {
   final ApiClient c = ref.watch(apiClientProvider);
   return MediaRepository(c.upload);
+});
+
+final Provider<MapRepository> mapRepositoryProvider =
+    Provider<MapRepository>((Ref ref) {
+  final ApiClient c = ref.watch(apiClientProvider);
+  return MapRepository(
+    (String path, {Map<String, dynamic>? query, bool skipAuth = false}) =>
+        c.get(path, query: query, skipAuth: skipAuth),
+    (String path, {Object? body}) => c.patch(path, body: body),
+    (String path, {Object? body}) => c.delete(path, body: body),
+  );
 });
 
 final Provider<AdminRepository> adminRepositoryProvider =

@@ -51,6 +51,30 @@ abstract final class AppConfig {
 
   static const int pageSize = 20;
 
+  /// Map tiles. The default is the standard OpenStreetMap server (no key),
+  /// recoloured on the client to the app's grey palette (and inverted for
+  /// dark mode). OSM's tile policy only allows light use, so production
+  /// builds should point at a provider you have a plan with, e.g.:
+  ///   --dart-define=MAP_TILES_LIGHT=https://api.maptiler.com/maps/dataviz/{z}/{x}/{y}.png?key=KEY
+  ///   --dart-define=MAP_TILES_DARK=https://api.maptiler.com/maps/dataviz-dark/{z}/{x}/{y}.png?key=KEY
+  /// Custom tiles are shown as-is (no recolouring).
+  static const String mapTilesLight = String.fromEnvironment(
+    'MAP_TILES_LIGHT',
+    defaultValue: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  );
+
+  /// Optional dedicated dark style; empty means "reuse light tiles".
+  static const String mapTilesDark = String.fromEnvironment('MAP_TILES_DARK');
+
+  /// True when using the default OSM tiles, which the app recolours.
+  static const bool mapTilesRecolour = !bool.hasEnvironment('MAP_TILES_LIGHT');
+
+  /// Credit line required by the tile source.
+  static const String mapAttribution = String.fromEnvironment(
+    'MAP_ATTRIBUTION',
+    defaultValue: '© OpenStreetMap contributors',
+  );
+
   /// Kigali city centre — fallback origin for the "Near you" rail when the
   /// device location is unknown.
   static const double defaultLatitude = -1.9441;

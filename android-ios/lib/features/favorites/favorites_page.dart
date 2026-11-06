@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/strings.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/neo_widgets.dart';
@@ -128,8 +129,17 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
                     ),
                     child: Row(
                       children: [
+                        if (Navigator.of(context).canPop()) ...<Widget>[
+                          NeoIconButton(
+                            icon: Icons.arrow_back_rounded,
+                            tooltip: L10n.i.commonBack,
+                            onPressed: () => Navigator.of(context).maybePop(),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                        ],
                         Expanded(
-                          child: Text('Saved', style: theme.textTheme.displayMedium),
+                          child: Text(L10n.i.navSaved,
+                              style: theme.textTheme.displayMedium),
                         ),
                         if (_items.isNotEmpty)
                           Text(

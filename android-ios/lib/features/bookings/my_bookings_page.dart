@@ -13,6 +13,7 @@ import '../../data/repositories/booking_repository.dart';
 import '../../data/repositories/users_repository.dart';
 import 'booking_detail_page.dart';
 import '../shell/root_shell.dart';
+import '../shell/profile_button.dart';
 
 /// Bookings tab. A single list covers both sides of the marketplace, split by
 /// role so a user who is both renter and owner sees the right counts.
@@ -135,7 +136,15 @@ class _MyBookingsPageState extends ConsumerState<MyBookingsPage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(L10n.i.bkTitle, style: theme.textTheme.displayMedium),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(L10n.i.bkTitle,
+                                style: theme.textTheme.displayMedium),
+                          ),
+                          const ProfileAvatarButton(),
+                        ],
+                      ),
                       const SizedBox(height: AppSpacing.md),
                       SegmentedButton<BookingRole>(
                         segments: <ButtonSegment<BookingRole>>[

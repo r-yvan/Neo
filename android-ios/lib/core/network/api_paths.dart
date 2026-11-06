@@ -110,6 +110,10 @@ abstract final class ApiPaths {
   static String dispute(String id) => '$_v1/disputes/$id';
   static String disputeRespond(String id) => '$_v1/disputes/$id/respond';
 
+  // ------------------------------------------------------------------- map
+  static const String mapNearby = '$_v1/map/nearby';
+  static const String mapMe = '$_v1/map/me';
+
   // --------------------------------------------------------------- uploads
   static const String uploads = '$_v1/uploads';
 

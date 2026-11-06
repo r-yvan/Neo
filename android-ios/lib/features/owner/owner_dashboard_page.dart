@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/strings.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
@@ -11,6 +12,7 @@ import '../../data/repositories/booking_repository.dart';
 import '../../data/repositories/users_repository.dart';
 import '../bookings/booking_detail_page.dart';
 import '../equipment/equipment_form_page.dart';
+import '../shell/profile_button.dart';
 
 /// Owner control room: earnings, listings (boost control), incoming requests
 /// and MoMo withdrawals. Everything comes from the live API — no mocks.
@@ -296,17 +298,20 @@ class _OwnerDashboardPageState extends ConsumerState<OwnerDashboardPage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Owner dashboard'),
+        automaticallyImplyLeading: false,
+        title: Text(L10n.i.actOwnerDashboard),
         actions: <Widget>[
           if (!_loading)
-            Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.md),
-              child: TextButton.icon(
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Refresh'),
-                onPressed: _load,
-              ),
+            NeoIconButton(
+              icon: Icons.refresh_rounded,
+              tooltip: 'Refresh',
+              onPressed: _load,
             ),
+          const SizedBox(width: AppSpacing.xs),
+          const Padding(
+            padding: EdgeInsets.only(right: AppSpacing.md),
+            child: ProfileAvatarButton(size: 40),
+          ),
         ],
       ),
       body: SafeArea(

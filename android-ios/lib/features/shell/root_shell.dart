@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_config.dart';
@@ -11,32 +12,32 @@ import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import '../bookings/my_bookings_page.dart';
 import '../chat/conversations_page.dart';
-import '../favorites/favorites_page.dart';
 import '../home/explore_page.dart';
 import '../owner/owner_dashboard_page.dart';
-import '../profile/profile_page.dart';
+import 'profile_button.dart';
 
 /// Tab state survives tab switches via [IndexedStack].
 ///
 /// The tab index is lifted into a provider so a deep action (e.g. "open my
-/// bookings" from a notification) can drive navigation.
+/// bookings" from a notification or the profile screen) can drive navigation.
 final StateProvider<int> shellTabProvider = StateProvider<int>((Ref ref) => 0);
 
-/// Opens the shell on a given tab. Safe to call from anywhere.
+/// Switches the shell to a tab. Safe to call from anywhere, including a page
+/// pushed on top of the shell (pop back to the shell first).
 void openShellTab(BuildContext context, int index) {
   ProviderScope.containerOf(context, listen: false)
       .read(shellTabProvider.notifier)
       .state = index;
 }
 
-/// Tabs in display order.
+/// The four tabs, identical for every role (renter, owner, admin).
+/// Profile lives behind the avatar at the top of each tab; Saved lives inside
+/// Profile; the admin console is reached from Profile.
 abstract final class ShellTab {
   static const int explore = 0;
   static const int bookings = 1;
-  static const int saved = 2;
-  static const int messages = 3;
-  static const int owner = 4;
-  static const int profile = 5;
+  static const int messages = 2;
+  static const int owner = 3;
 }
 
 class RootShell extends ConsumerStatefulWidget {
@@ -57,7 +58,6 @@ class _RootShellState extends ConsumerState<RootShell> {
   @override
   void initState() {
     super.initState();
-    _index = widget.initialTab;
     // Keep the provider in sync so deep actions start from the right tab.
     Future<void>.microtask(
         () => ref.read(shellTabProvider.notifier).state = _index);
@@ -72,8 +72,8 @@ class _RootShellState extends ConsumerState<RootShell> {
     super.dispose();
   }
 
-  /// Unread chat count for the Messages tab. Failures are silent — a badge
-  /// is a hint, never a blocker.
+  /// Unread chat count for the Chat tab. Failures are silent: a badge is a
+  /// hint, never a blocker.
   Future<void> _refreshBadges() async {
     try {
       final int unread = await ref.read(chatRepositoryProvider).unreadCount();
@@ -86,7 +86,9 @@ class _RootShellState extends ConsumerState<RootShell> {
   @override
   Widget build(BuildContext context) {
     ref.listen<int>(shellTabProvider, (int? _, int next) {
-      if (next != _index) setState(() => _index = next);
+      if (next != _index && next >= 0 && next <= ShellTab.owner) {
+        setState(() => _index = next);
+      }
     });
 
     final bool hasOwnerRole =
@@ -95,20 +97,17 @@ class _RootShellState extends ConsumerState<RootShell> {
     final List<Widget> pages = <Widget>[
       const ExplorePage(),
       const MyBookingsPage(),
-      const FavoritesPage(),
       const ConversationsPage(),
-      hasOwnerRole
-          ? const OwnerDashboardPage()
-          : const BecomeOwnerPrompt(),
-      const ProfilePage(embedded: true),
+      hasOwnerRole ? const OwnerDashboardPage() : const BecomeOwnerPrompt(),
     ];
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: IndexedStack(index: _index, children: pages),
-      bottomNavigationBar: _NeoNavBar(
+      bottomNavigationBar: _FloatingNavBar(
         index: _index,
         onSelected: (int i) {
+          if (i != _index) HapticFeedback.selectionClick();
           setState(() => _index = i);
           if (i == ShellTab.messages) _refreshBadges();
           ref.read(shellTabProvider.notifier).state = i;
@@ -120,8 +119,10 @@ class _RootShellState extends ConsumerState<RootShell> {
   }
 }
 
-class _NeoNavBar extends StatelessWidget {
-  const _NeoNavBar({
+/// Suspended, fully rounded tab bar that floats above the content and the
+/// system gesture area.
+class _FloatingNavBar extends StatelessWidget {
+  const _FloatingNavBar({
     required this.index,
     required this.onSelected,
     required this.badges,
@@ -136,90 +137,149 @@ class _NeoNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final bool dark = theme.brightness == Brightness.dark;
     final S s = L10n.i;
 
-    Widget destination({
-      required IconData icon,
-      required IconData active,
-      required String label,
-      required int value,
-    }) =>
-        NavigationDestination(
-          icon: icon == active
-              ? Icon(icon)
-              : _Badged(icon: icon, count: badges[value] ?? 0),
-          selectedIcon: Icon(active),
-          label: label,
-        );
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: theme.colorScheme.outline)),
+    final List<_NavSpec> items = <_NavSpec>[
+      _NavSpec(Icons.explore_outlined, Icons.explore_rounded, s.navExplore),
+      _NavSpec(Icons.receipt_long_outlined, Icons.receipt_long_rounded,
+          s.navBookings),
+      _NavSpec(Icons.chat_bubble_outline_rounded, Icons.chat_bubble_rounded,
+          s.navMessages),
+      _NavSpec(
+        ownerTab ? Icons.storefront_outlined : Icons.add_business_outlined,
+        ownerTab ? Icons.storefront_rounded : Icons.add_business_rounded,
+        ownerTab ? s.navMyGear : s.navListGear,
       ),
-      child: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: onSelected,
-        destinations: <Widget>[
-          destination(
-            icon: Icons.explore_outlined,
-            active: Icons.explore_rounded,
-            label: s.navExplore,
-            value: ShellTab.explore,
+    ];
+
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+        child: Container(
+          height: 68,
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: dark ? AppColors.darkSurfaceRaised : Colors.white,
+            borderRadius: AppRadii.pillAll,
+            border: Border.all(
+              color: dark
+                  ? AppColors.darkBorder
+                  : theme.colorScheme.outline.withValues(alpha: 0.7),
+            ),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Colors.black.withValues(alpha: dark ? 0.45 : 0.12),
+                blurRadius: 28,
+                offset: const Offset(0, 12),
+                spreadRadius: -8,
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: dark ? 0.3 : 0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
-          destination(
-            icon: Icons.receipt_long_outlined,
-            active: Icons.receipt_long_rounded,
-            label: s.navBookings,
-            value: ShellTab.bookings,
+          child: Row(
+            children: <Widget>[
+              for (int i = 0; i < items.length; i++)
+                Expanded(
+                  child: _NavItem(
+                    spec: items[i],
+                    selected: i == index,
+                    badge: badges[i] ?? 0,
+                    onTap: () => onSelected(i),
+                  ),
+                ),
+            ],
           ),
-          destination(
-            icon: Icons.favorite_border_rounded,
-            active: Icons.favorite_rounded,
-            label: s.navSaved,
-            value: ShellTab.saved,
-          ),
-          destination(
-            icon: Icons.chat_bubble_outline_rounded,
-            active: Icons.chat_bubble_rounded,
-            label: s.navMessages,
-            value: ShellTab.messages,
-          ),
-          destination(
-            icon: ownerTab
-                ? Icons.storefront_outlined
-                : Icons.add_business_outlined,
-            active: ownerTab
-                ? Icons.storefront_rounded
-                : Icons.add_business_rounded,
-            label: ownerTab ? s.navMyGear : s.navListGear,
-            value: ShellTab.owner,
-          ),
-          destination(
-            icon: Icons.person_outline_rounded,
-            active: Icons.person_rounded,
-            label: s.navProfile,
-            value: ShellTab.profile,
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _Badged extends StatelessWidget {
-  const _Badged({required this.icon, required this.count});
+class _NavSpec {
+  const _NavSpec(this.icon, this.activeIcon, this.label);
 
   final IconData icon;
-  final int count;
+  final IconData activeIcon;
+  final String label;
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.spec,
+    required this.selected,
+    required this.badge,
+    required this.onTap,
+  });
+
+  final _NavSpec spec;
+  final bool selected;
+  final int badge;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    if (count <= 0) return Icon(icon);
-    return Badge(
-      label: Text(count > 99 ? '99+' : '$count'),
-      backgroundColor: AppColors.accent,
-      textColor: Colors.white,
-      child: Icon(icon),
+    final ThemeData theme = Theme.of(context);
+    final Color fg =
+        selected ? Colors.white : theme.colorScheme.onSurfaceVariant;
+
+    Widget icon = Icon(selected ? spec.activeIcon : spec.icon, size: 22, color: fg);
+    if (badge > 0) {
+      icon = Badge(
+        label: Text(badge > 99 ? '99+' : '$badge'),
+        backgroundColor: selected ? Colors.white : AppColors.accent,
+        textColor: selected ? AppColors.accent : Colors.white,
+        child: icon,
+      );
+    }
+
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: spec.label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.accent : Colors.transparent,
+            borderRadius: AppRadii.pillAll,
+            boxShadow: selected ? AppShadows.accent : null,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              icon,
+              const SizedBox(height: 3),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    spec.label,
+                    maxLines: 1,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: fg,
+                      fontSize: 11,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      height: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -236,11 +296,22 @@ class BecomeOwnerPrompt extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
+        bottom: false,
         child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xl),
           children: [
-            const SizedBox(height: AppSpacing.md),
-            Text(s.ownerPromptTitle, style: theme.textTheme.displayMedium),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: Text(s.ownerPromptTitle,
+                      style: theme.textTheme.displayMedium),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                const ProfileAvatarButton(),
+              ],
+            ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               s.ownerPromptBody,

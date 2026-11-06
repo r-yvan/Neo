@@ -19,10 +19,12 @@ A premium, modern Flutter mobile application for peer-to-peer event equipment re
 - **Framework**: Flutter (latest stable)
 - **State Management**: Riverpod
 - **Networking**: Dio with JWT interceptors
-- **Local Storage**: Hive + Flutter Secure Storage
-- **Real-time**: Socket.io Client
+- **Local Storage**: Flutter Secure Storage + SharedPreferences
+- **Messaging**: REST with short polling (the backend has no websocket gateway)
 - **Image Caching**: Cached Network Image
-- **Code Generation**: json_serializable, freezed, build_runner
+- **Uploads**: image_picker → `POST /api/v1/uploads` (multipart)
+- **Illustrations**: animated `CustomPainter` scenes (no image/Lottie assets)
+- **Models**: hand-written (no code generation step)
 
 ## Prerequisites
 
@@ -43,36 +45,18 @@ A premium, modern Flutter mobile application for peer-to-peer event equipment re
    flutter pub get
    ```
 
-3. **Generate code** (required for models and providers):
+3. **Fonts**: Satoshi ships with the app in `assets/fonts/satoshi/` (all weights
+   and italics, registered in `pubspec.yaml`). There is nothing to download.
+
+4. **Backend URL**: no code edits are needed. The app defaults to
+   `http://localhost:3000/api/v1` on web/iOS and `http://10.0.2.2:3000/api/v1`
+   on the Android emulator. For a real phone or another host, pass:
+
    ```bash
-   flutter pub run build_runner build --delete-conflicting-outputs
+   flutter run --dart-define=API_BASE_URL=http://<LAN_IP>:3000/api/v1
    ```
 
-4. **Add Satoshi font files**:
-   - Download the Satoshi font family from [FontShare](https://www.fontshare.com/fonts/satoshi)
-   - Place the font files in `assets/fonts/`:
-     - `Satoshi-Light.ttf`
-     - `Satoshi-Regular.ttf`
-     - `Satoshi-Medium.ttf`
-     - `Satoshi-Bold.ttf`
-     - `Satoshi-Black.ttf`
-
-5. **Configure backend URL**:
-   - Edit `lib/core/config/app_config.dart`
-   - Update `baseUrl` to your backend API URL
-   - Update `websocketUrl` to your WebSocket URL
-
-   Example:
-   ```dart
-   static const String baseUrl = 'http://YOUR_IP:3000/api/v1';
-   static const String websocketUrl = 'http://YOUR_IP:3000';
-   ```
-
-   For production, use your actual domain:
-   ```dart
-   static const String baseUrl = 'https://api.eventneo.rw/api/v1';
-   static const String websocketUrl = 'https://api.eventneo.rw';
-   ```
+   See [`../starter-cmds.md`](../starter-cmds.md) for every run target.
 
 ## Running the App
 
@@ -133,7 +117,7 @@ lib/
 
 ### Typography
 
-- **Font Family**: Satoshi (Light, Regular, Medium, Bold, Black)
+- **Font Family**: Satoshi (Light, Regular, Medium, Bold, Black and italics), bundled in `assets/fonts/satoshi/`
 - **Hierarchy**: Display, Headline, Title, Body, Label sizes
 
 ### Components
@@ -185,12 +169,10 @@ Actual payment integration requires API keys from mobile money providers.
 
 ## Development
 
-### Code Generation
-
-After modifying models or adding new providers, run:
+### Tests
 
 ```bash
-flutter pub run build_runner build --delete-conflicting-outputs
+flutter test
 ```
 
 ### Linting
@@ -240,19 +222,18 @@ If you encounter errors after adding new models:
 ```bash
 flutter clean
 flutter pub get
-flutter pub run build_runner build --delete-conflicting-outputs
 ```
 
 ### Font not found
 
-Ensure all Satoshi font files are in `assets/fonts/` and match the names in `pubspec.yaml`.
+The Satoshi `.otf` files live in `assets/fonts/satoshi/`. Run `flutter clean && flutter pub get` if a build still cannot find them.
 
 ### Backend connection issues
 
 1. Ensure the backend is running at the configured URL
 2. Check network connectivity
 3. Verify CORS settings on the backend
-4. For Android emulator, use `10.0.2.2` instead of `localhost`
+4. The Android emulator reaches your computer through `10.0.2.2` (the default). A real phone needs `--dart-define=API_BASE_URL=http://<LAN_IP>:3000/api/v1`
 
 ## Backend Setup
 
