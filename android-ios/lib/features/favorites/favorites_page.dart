@@ -169,7 +169,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
     }
     if (_items.isEmpty) {
       return <Widget>[
-        SliverFillRemaining(
+        const SliverFillRemaining(
           hasScrollBody: false,
           child: NeoEmptyState(
             icon: Icons.favorite_border_rounded,

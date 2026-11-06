@@ -40,6 +40,9 @@ const bookingInclude = {
   owner: {
     select: { id: true, fullName: true, phone: true, profileImage: true },
   },
+  dispute: {
+    select: { id: true, status: true, openedById: true, createdAt: true },
+  },
 } satisfies Prisma.BookingInclude;
 
 @Injectable()

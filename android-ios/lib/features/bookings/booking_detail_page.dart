@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/l10n/strings.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/api_exception.dart';
@@ -13,6 +15,7 @@ import '../chat/chat_page.dart';
 import '../equipment/equipment_detail_page.dart';
 import '../reviews/write_review_sheet.dart';
 import 'my_bookings_page.dart';
+import '../trust/dispute_page.dart';
 
 /// Full booking view: pricing receipt, status timeline and the exact action
 /// set permitted for the current user and status.
@@ -84,7 +87,7 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
       });
       await _load();
       if (mounted) {
-        showNeoSnack(context, 'Booking ${updated.status.label.toLowerCase()}',
+        showNeoSnack(context, L10n.i.bdSnack(updated.status.label),
             icon: Icons.check_circle_outline_rounded);
       }
     } on ApiException catch (e) {
@@ -113,7 +116,7 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
       setState(() => _busy = false);
       await _load();
       if (mounted) {
-        showNeoSnack(context, 'Payment confirmed', icon: Icons.verified_rounded);
+        showNeoSnack(context, L10n.i.bdPaymentConfirmed, icon: Icons.verified_rounded);
       }
     } on ApiException catch (e) {
       if (mounted) {
@@ -126,13 +129,12 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
   Future<void> _extend() async {
     final Booking? booking = _booking;
     if (booking == null) return;
-    final DateTime now = DateTime.now();
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: booking.endDate.add(const Duration(days: 1)),
       firstDate: booking.endDate.add(const Duration(days: 1)),
       lastDate: booking.endDate.add(const Duration(days: 90)),
-      helpText: 'New end date',
+      helpText: L10n.i.bdExtendHelp,
     );
     if (picked != null) await _run('extend', newEnd: picked);
   }
@@ -147,7 +149,7 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
     if (_booking == null) {
       return Scaffold(
         appBar: AppBar(leading: const BackButton()),
-        body: NeoErrorState(message: _error ?? 'Not found', onRetry: _load),
+        body: NeoErrorState(message: _error ?? L10n.i.bdNotFound, onRetry: _load),
       );
     }
 
@@ -160,7 +162,7 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: true,
-        title: Text('Booking', style: theme.textTheme.titleLarge),
+        title: Text(L10n.i.bdTitle, style: theme.textTheme.titleLarge),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: AppSpacing.sm),
@@ -183,7 +185,7 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
             const SizedBox(height: AppSpacing.md),
             _receipt(booking),
             const SizedBox(height: AppSpacing.lg),
-            Text('Timeline', style: theme.textTheme.titleMedium),
+            Text(L10n.i.bdTimeline, style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),
             _timelineView(),
             const SizedBox(height: AppSpacing.lg),
@@ -251,7 +253,7 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
               const Icon(Icons.inventory_2_outlined, size: 16),
               const SizedBox(width: AppSpacing.xs),
               Text(
-                '${booking.quantity} unit${booking.quantity == 1 ? '' : 's'} · ${booking.days} day${booking.days == 1 ? '' : 's'}',
+                '${L10n.i.flowUnitCount(booking.quantity)} · ${L10n.i.flowDayCount(booking.days)}',
                 style: theme.textTheme.bodyMedium,
               ),
               const Spacer(),
@@ -286,22 +288,24 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
       child: Column(
         children: [
           DetailRow(
-            label: 'Rental total',
+            label: L10n.i.bdTotal,
             value: Money.format(booking.totalPrice),
           ),
           DetailRow(
-            label: 'Platform fee (10%)',
+            label: L10n.i.flowPlatformFee,
             value: '− ${Money.format(booking.commissionAmount)}',
             valueColour: AppColors.accent,
           ),
           if (booking.depositAmount > 0)
             DetailRow(
-              label: 'Deposit recorded',
+              label: L10n.i.bdDepositRecorded,
               value: Money.format(booking.depositAmount),
             ),
           const Divider(height: AppSpacing.md),
           DetailRow(
-            label: asOwnerOf(booking) ? 'You receive' : 'Owner receives',
+            label: asOwnerOf(booking)
+                ? L10n.i.bdYouReceive
+                : L10n.i.bdOwnerReceives,
             value: Money.format(booking.ownerPayout),
             emphasis: true,
           ),
@@ -319,8 +323,8 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
       return NeoEmptyState(
         compact: true,
         icon: Icons.timeline_rounded,
-        title: 'No activity yet',
-        message: 'Status changes will appear here.',
+        title: L10n.i.bdNoActivityTitle,
+        message: L10n.i.bdNoActivityBody,
       );
     }
     return Column(
@@ -358,7 +362,7 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
                       if (entry.note != null)
                         Text(entry.note!, style: theme.textTheme.bodySmall),
                       Text(
-                        '${entry.actor?.fullName ?? 'System'} · ${Dates.relative(entry.createdAt)}',
+                        '${entry.actor?.fullName ?? L10n.i.bdActorSystem} · ${Dates.relative(entry.createdAt)}',
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
@@ -377,7 +381,9 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
 
     if (counterparty != null) {
       buttons.add(NeoButton(
-        label: 'Message ${asOwner ? 'renter' : 'owner'}',
+        label: asOwner
+            ? L10n.i.bdMessageRenter(L10n.i.roleRenter)
+            : L10n.i.bdMessageOwner(L10n.i.roleOwner),
         variant: NeoButtonVariant.secondary,
         icon: Icons.chat_bubble_outline_rounded,
         onPressed: () => Navigator.of(context).push<void>(
@@ -392,7 +398,7 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
     if (!asOwner && booking.status == BookingStatus.accepted &&
         booking.paymentStatus == PaymentStatus.pending) {
       buttons.add(NeoButton(
-        label: 'Pay ${Money.format(booking.totalPrice)}',
+        label: L10n.i.flowPayTotal(Money.format(booking.totalPrice)),
         icon: Icons.lock_rounded,
         loading: _busy,
         onPressed: _busy ? null : _pay,
@@ -402,12 +408,12 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
     if (asOwner && booking.status == BookingStatus.pending) {
       buttons
         ..add(NeoButton(
-          label: 'Accept request',
+          label: L10n.i.bdAcceptRequest,
           loading: _busy,
           onPressed: _busy ? null : () => _run('accept'),
         ))
         ..add(NeoButton(
-          label: 'Decline',
+          label: L10n.i.bkDecline,
           variant: NeoButtonVariant.secondary,
           onPressed: _busy ? null : () => _run('reject'),
         ));
@@ -415,7 +421,7 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
 
     if (asOwner && booking.status == BookingStatus.accepted) {
       buttons.add(NeoButton(
-        label: 'Start rental',
+        label: L10n.i.bdStart,
         loading: _busy,
         onPressed: _busy ? null : () => _run('start'),
       ));
@@ -424,7 +430,7 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
     if (booking.status == BookingStatus.accepted ||
         booking.status == BookingStatus.ongoing) {
       buttons.add(NeoButton(
-        label: 'Extend rental',
+        label: L10n.i.bdExtend,
         variant: NeoButtonVariant.secondary,
         icon: Icons.event_repeat_rounded,
         onPressed: _busy ? null : _extend,
@@ -433,7 +439,7 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
 
     if (booking.status == BookingStatus.ongoing) {
       buttons.add(NeoButton(
-        label: 'Mark as completed',
+        label: L10n.i.bdComplete,
         loading: _busy,
         onPressed: _busy ? null : () => _run('complete'),
       ));
@@ -441,7 +447,7 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
 
     if (booking.status == BookingStatus.completed && !asOwner) {
       buttons.add(NeoButton(
-        label: 'Leave a review',
+        label: L10n.i.bdReview,
         icon: Icons.star_outline_rounded,
         onPressed: () async {
           final bool? done = await showWriteReviewSheet(context, booking);
@@ -450,12 +456,28 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
       ));
     }
 
-    if (booking.status == BookingStatus.pending ||
+    final String? disputeId = booking.disputeId;
+    if (disputeId != null) {
+      buttons.insert(
+        0,
+        NeoButton(
+          label: L10n.i.disputeView,
+          icon: Icons.gavel_rounded,
+          variant: NeoButtonVariant.secondary,
+          onPressed: () async {
+            await Navigator.of(context).push<void>(MaterialPageRoute<void>(
+                builder: (BuildContext _) =>
+                    DisputePage(disputeId: disputeId)));
+            if (mounted) _load();
+          },
+        ),
+      );
+    } else if (booking.status == BookingStatus.pending ||
         booking.status == BookingStatus.accepted ||
         booking.status == BookingStatus.ongoing ||
         booking.status == BookingStatus.completed) {
       buttons.add(NeoButton(
-        label: 'Report a problem',
+        label: L10n.i.bdReport,
         variant: NeoButtonVariant.ghost,
         icon: Icons.report_problem_outlined,
         onPressed: _busy ? null : () => _openDispute(),
@@ -466,17 +488,17 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
         booking.status == BookingStatus.accepted ||
         booking.status == BookingStatus.ongoing) {
       buttons.add(NeoButton(
-        label: 'Cancel booking',
+        label: L10n.i.bdCancel,
         variant: NeoButtonVariant.ghost,
         onPressed: _busy
             ? null
             : () async {
                 final bool ok = await confirmNeo(
                   context,
-                  title: 'Cancel this booking?',
+                  title: L10n.i.bdCancelTitle,
                   message:
-                      'This cannot be undone. Ask the other party first if you can.',
-                  confirmLabel: 'Cancel booking',
+                      L10n.i.bdCancelBody,
+                  confirmLabel: L10n.i.bdCancel,
                   destructive: true,
                 );
                 if (ok) await _run('cancel');
@@ -514,22 +536,22 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Report a problem',
+              Text(L10n.i.bdReport,
                   style: Theme.of(ctx).textTheme.headlineMedium),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'A dispute pauses the booking while the Neo team reviews both sides.',
+                L10n.i.bdDisputeBody,
                 style: Theme.of(ctx).textTheme.bodySmall,
               ),
               const SizedBox(height: AppSpacing.md),
               NeoField(
-                label: 'What went wrong?',
+                label: L10n.i.bdDisputeField,
                 controller: reason,
                 maxLines: 4,
               ),
               const SizedBox(height: AppSpacing.lg),
               NeoButton(
-                label: 'Open dispute',
+                label: L10n.i.bdDisputeSubmit,
                 variant: NeoButtonVariant.secondary,
                 onPressed: () => Navigator.of(ctx).pop(true),
               ),
@@ -540,14 +562,17 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
     );
     if (confirmed != true || reason.text.trim().isEmpty) return;
     try {
-      await ref.read(trustRepositoryProvider).openDispute(
-            bookingId: booking.id,
-            reason: reason.text.trim(),
-          );
+      final Dispute dispute =
+          await ref.read(trustRepositoryProvider).openDispute(
+                bookingId: booking.id,
+                reason: reason.text.trim(),
+              );
       await _load();
       if (mounted) {
-        showNeoSnack(context, 'Dispute opened. We will be in touch.',
+        showNeoSnack(context, L10n.i.bdDisputeSnack,
             icon: Icons.gavel_rounded);
+        await Navigator.of(context).push<void>(MaterialPageRoute<void>(
+            builder: (BuildContext _) => DisputePage(disputeId: dispute.id)));
       }
     } on ApiException catch (e) {
       if (mounted) showNeoSnack(context, e.message, isError: true);

@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
+import '../../core/l10n/strings.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -56,12 +57,12 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
   String? _error;
   Booking? _booking;
 
-  static const List<_FlowStep> _steps = <_FlowStep>[
-    _FlowStep('Dates', 'When do you need it?'),
-    _FlowStep('Quantity', 'How many units?'),
-    _FlowStep('Summary', 'Check the details'),
-    _FlowStep('Payment', 'Pay with mobile money'),
-  ];
+  static List<_FlowStep> get _steps => <_FlowStep>[
+        _FlowStep(L10n.i.flowDates, L10n.i.flowDatesSub),
+        _FlowStep(L10n.i.flowQuantity, L10n.i.flowQuantitySub),
+        _FlowStep(L10n.i.flowSummary, L10n.i.flowSummarySub),
+        _FlowStep(L10n.i.flowPayment, L10n.i.flowPaymentSub),
+      ];
 
   @override
   void initState() {
@@ -124,7 +125,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
       _goTo(2);
       showNeoSnack(
         context,
-        'Request sent to ${booking.owner?.fullName ?? 'the owner'}.',
+        L10n.i.flowRequestSent(
+            booking.owner?.fullName ?? L10n.i.flowOwnerFallback),
         icon: Icons.send_rounded,
       );
     } on ApiException catch (e) {
@@ -157,7 +159,7 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
         _booking = booking.copyWith(paymentStatus: PaymentStatus.paid);
         _busy = false;
       });
-      showNeoSnack(context, 'Payment confirmed. The owner has been notified.',
+      showNeoSnack(context, L10n.i.flowPaymentConfirmed,
           icon: Icons.check_circle_outline_rounded);
     } on ApiException catch (e) {
       if (mounted) {
@@ -195,7 +197,7 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
           icon: const Icon(Icons.close_rounded),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: Text('Request to book', style: theme.textTheme.titleLarge),
+        title: Text(L10n.i.flowTitle, style: theme.textTheme.titleLarge),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
           child: LinearProgressIndicator(
@@ -253,8 +255,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
             rangeStartDay: _start,
             rangeEndDay: _end,
             startingDayOfWeek: StartingDayOfWeek.monday,
-            availableCalendarFormats: const <CalendarFormat, String>{
-              CalendarFormat.month: 'Month',
+            availableCalendarFormats: <CalendarFormat, String>{
+              CalendarFormat.month: L10n.i.calMonth,
             },
             calendarStyle: CalendarStyle(
               outsideDaysVisible: false,
@@ -273,7 +275,7 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
                 color: theme.colorScheme.onSurface,
                 fontWeight: AppFontWeight.medium,
               ),
-              disabledTextStyle: TextStyle(
+              disabledTextStyle: const TextStyle(
                 fontFamily: kFontFamily,
                 color: AppColors.grey300,
                 decoration: TextDecoration.lineThrough,
@@ -311,7 +313,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
               if (span.any((DateTime d) =>
                   blocked.any((DateTime b) => Dates.isSameDay(b, d)))) {
                 setState(
-                    () => _error = 'That range includes an unavailable day');
+                    () =>
+                        _error = L10n.i.flowBlockedRange);
                 return;
               }
               setState(() {
@@ -332,7 +335,7 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '${blocked.length} day${blocked.length == 1 ? '' : 's'} blocked by the owner.',
+                  L10n.i.flowBlockedByOwner(blocked.length),
                   style: theme.textTheme.bodySmall,
                 ),
               ),
@@ -341,8 +344,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
         ],
         const SizedBox(height: AppSpacing.lg),
         NeoField(
-          label: 'Note for the owner (optional)',
-          hint: 'Event type, delivery details, pickup time…',
+          label: L10n.i.flowOwnerNoteLabel,
+          hint: L10n.i.flowOwnerNoteHint,
           controller: _notes,
           maxLines: 3,
         ),
@@ -370,7 +373,7 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
               Row(
                 children: [
                   Expanded(
-                    child: Text('Units needed',
+                    child: Text(L10n.i.flowUnitsNeeded,
                         style: theme.textTheme.titleMedium),
                   ),
                   Row(
@@ -424,7 +427,7 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
               ),
               const Divider(height: AppSpacing.md),
               DetailRow(
-                label: 'Estimated total',
+                label: L10n.i.flowEstimatedTotal,
                 value: Money.format(preview.total),
                 emphasis: true,
               ),
@@ -446,12 +449,11 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
     if (isOwnListing) {
       return ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
-        children: const <Widget>[
+        children: <Widget>[
           NeoEmptyState(
             icon: Icons.info_outline_rounded,
-            title: 'This is your listing',
-            message: 'You cannot rent your own equipment. '
-                'Manage it from the My gear tab instead.',
+            title: L10n.i.flowOwnListingTitle,
+            message: L10n.i.flowOwnListingMessage,
           ),
         ],
       );
@@ -471,7 +473,7 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
                 context,
                 equipmentCategoryIcon(widget.equipment.category),
                 widget.equipment.title,
-                '${_quantity} unit${_quantity == 1 ? '' : 's'} · '
+                '${L10n.i.flowUnitCount(_quantity)} · '
                 '${widget.equipment.location}',
               ),
               const Divider(height: AppSpacing.lg),
@@ -492,7 +494,7 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
                 children: [
                   const Icon(Icons.schedule_rounded, size: 16),
                   const SizedBox(width: AppSpacing.xs),
-                  Text('$_days day${_days == 1 ? '' : 's'}',
+                  Text(L10n.i.flowDayCount(_days),
                       style: theme.textTheme.bodyMedium),
                 ],
               ),
@@ -504,22 +506,22 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
           child: Column(
             children: [
               DetailRow(
-                label: 'Rental subtotal',
+                label: L10n.i.flowSubtotal,
                 value: Money.format(preview.total),
               ),
               DetailRow(
-                label: 'Platform fee (10%)',
+                label: L10n.i.flowPlatformFee,
                 value: Money.format(preview.commission),
                 valueColour: AppColors.accent,
               ),
               if (preview.deposit > 0)
                 DetailRow(
-                  label: 'Refundable deposit (recorded)',
+                  label: L10n.i.flowDeposit,
                   value: Money.format(preview.deposit),
                 ),
               const Divider(height: AppSpacing.md),
               DetailRow(
-                label: 'You pay now',
+                label: L10n.i.flowYouPayNow,
                 value: Money.format(preview.total),
                 emphasis: true,
               ),
@@ -537,7 +539,7 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
-                  'Nothing is charged yet. The owner reviews your request first — you pay only after they accept.',
+                  L10n.i.flowPayNothingYet,
                   style: theme.textTheme.bodySmall,
                 ),
               ),
@@ -564,9 +566,10 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Message ${booking.owner?.fullName ?? 'the owner'}',
+                      Text(L10n.i.flowMessageOwner(booking.owner?.fullName ??
+                          L10n.i.flowOwnerFallback),
                           style: theme.textTheme.titleSmall),
-                      Text('Ask about pickup or delivery',
+                      Text(L10n.i.flowAskPickup,
                           style: theme.textTheme.bodySmall),
                     ],
                   ),
@@ -592,7 +595,7 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
         Container(
           width: 44,
           height: 44,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: AppColors.accentSoft,
             borderRadius: AppRadii.smAll,
           ),
@@ -621,12 +624,12 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
     if (booking == null) {
       return ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
-        children: const <Widget>[
+        children: <Widget>[
           NeoEmptyState(
             icon: Icons.receipt_long_outlined,
-            title: 'No request yet',
+            title: L10n.i.flowNoRequestTitle,
             message:
-                'Go back to the summary and send your booking request first.',
+                L10n.i.flowNoRequestBody,
           ),
         ],
       );
@@ -650,11 +653,12 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
                 const Icon(Icons.verified_rounded,
                     size: 44, color: AppColors.success),
                 const SizedBox(height: AppSpacing.sm),
-                Text('Payment complete', style: theme.textTheme.headlineMedium),
+                Text(L10n.i.flowPaymentCompleteTitle,
+                  style: theme.textTheme.headlineMedium),
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
-                  'You paid ${Money.format(booking.totalPrice)}. '
-                  'The owner keeps ${Money.format(booking.ownerPayout)} and Neo keeps the 10% fee.',
+                  L10n.i.flowPaymentCompleteBody(Money.format(booking.totalPrice),
+                      Money.format(booking.ownerPayout)),
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium,
                 ),
@@ -672,20 +676,19 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
                         size: 18, color: AppColors.warning),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
-                      'Waiting for the owner',
+                      L10n.i.flowWaitingOwner,
                       style: theme.textTheme.titleSmall,
                     ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Your request status is ${booking.status.label.toLowerCase()}. '
-                  'You will get a notification the moment the owner responds, and payment unlocks then.',
+                  L10n.i.flowStatusNote(booking.status.label),
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 NeoButton(
-                  label: 'Message the owner',
+                  label: L10n.i.flowMessageOwnerCta,
                   variant: NeoButtonVariant.secondary,
                   icon: Icons.chat_bubble_outline_rounded,
                   onPressed: _openChat,
@@ -694,12 +697,12 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
             ),
           )
         else ...[
-          Text('Amount due', style: theme.textTheme.titleSmall),
+          Text(L10n.i.flowAmountDue, style: theme.textTheme.titleSmall),
           const SizedBox(height: AppSpacing.xxs),
           Text(Money.format(booking.totalPrice),
               style: theme.textTheme.displayMedium),
           const SizedBox(height: AppSpacing.lg),
-          Text('Pay with', style: theme.textTheme.titleSmall),
+          Text(L10n.i.flowPayWith, style: theme.textTheme.titleSmall),
           const SizedBox(height: AppSpacing.xs),
           ...MobileMoneyProvider.values.map((MobileMoneyProvider p) {
             final bool selected = _provider == p;
@@ -719,8 +722,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
                           Text(p.label, style: theme.textTheme.titleSmall),
                           Text(
                             p.wire == MobileMoneyProvider.momo.wire
-                                ? 'MTN Rwanda'
-                                : 'Airtel Rwanda',
+                                ? L10n.i.momoName
+                                : L10n.i.airtelName,
                             style: theme.textTheme.bodySmall,
                           ),
                         ],
@@ -742,7 +745,7 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
           }),
           const SizedBox(height: AppSpacing.sm),
           NeoField(
-            label: 'Mobile money number',
+            label: L10n.i.flowMomoNumber,
             hint: '0780000000',
             controller: _phone,
             keyboardType: TextInputType.phone,
@@ -757,8 +760,8 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
           const SizedBox(height: AppSpacing.lg),
           NeoButton(
             label: _provider == null
-                ? 'Choose a payment method'
-                : 'Pay ${Money.format(booking.totalPrice)}',
+                ? L10n.i.flowChooseMethod
+                : L10n.i.flowPayTotal(Money.format(booking.totalPrice)),
             icon: Icons.lock_rounded,
             loading: _busy,
             onPressed:
@@ -781,11 +784,11 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
           border: Border(top: BorderSide(color: theme.colorScheme.outline)),
         ),
         child: NeoButton(
-            label: 'Close', onPressed: () => Navigator.of(context).pop()),
+            label: L10n.i.flowClose,
+            onPressed: () => Navigator.of(context).pop()),
       );
     }
 
-    final bool isLast = _step == _steps.length - 1;
     final bool canAdvance = _step < 2;
 
     return Container(
@@ -803,7 +806,7 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
         children: [
           if (_step > 0) ...[
             NeoButton(
-              label: 'Back',
+              label: L10n.i.flowBack,
               variant: NeoButtonVariant.secondary,
               expand: false,
               onPressed: () => _goTo(_step - 1),
@@ -813,10 +816,10 @@ class _BookingFlowPageState extends ConsumerState<BookingFlowPage> {
           Expanded(
             child: NeoButton(
               label: canAdvance
-                  ? 'Continue'
+                  ? L10n.i.flowContinue
                   : (_booking == null
-                      ? 'Send booking request'
-                      : 'Continue to payment'),
+                      ? L10n.i.flowSendRequest
+                      : L10n.i.flowContinuePayment),
               loading: _busy,
               icon: _booking != null && !canAdvance
                   ? Icons.arrow_forward_rounded
@@ -958,7 +961,7 @@ class _ProviderLogo extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: Text(
-        momo ? 'MoMo' : 'Airtel',
+        momo ? L10n.i.momoShort : 'Airtel',
         style: AppTypography.labelSmall.copyWith(
           fontSize: 10,
           color: momo ? AppColors.accent : AppColors.grey800,

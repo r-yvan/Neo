@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_config.dart';
-import '../../core/network/api_exception.dart';
+import '../../core/l10n/strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
-import '../../core/utils/parsing.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
@@ -16,8 +15,8 @@ import '../../data/repositories/users_repository.dart';
 import '../common/paginated_list_controller.dart';
 import '../equipment/equipment_detail_page.dart';
 import '../equipment/widgets/equipment_card.dart';
-import '../favorites/favorites_page.dart';
 import '../notifications/notifications_page.dart';
+import 'widgets/discovery_rails.dart';
 
 /// Home / Explore.
 ///
@@ -119,6 +118,8 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
           onRefresh: () async {
             await ref.read(_listProvider.notifier).refresh();
             ref.invalidate(platformConfigProvider);
+            ref.invalidate(popularEquipmentProvider);
+            ref.invalidate(nearbyEquipmentProvider);
           },
           child: CustomScrollView(
             controller: _scroll,
@@ -126,6 +127,8 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
               SliverToBoxAdapter(child: _header(context, user)),
               SliverToBoxAdapter(child: _searchBar(context)),
               SliverToBoxAdapter(child: _categories(context)),
+              if (!_query.isFiltered && _category == null)
+                const SliverToBoxAdapter(child: DiscoveryRails()),
               SliverToBoxAdapter(child: _metaRow(context)),
               ..._body(list),
               const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xxl)),
@@ -139,9 +142,10 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
   Widget _header(BuildContext context, AppUser? user) {
     final ThemeData theme = Theme.of(context);
     final DateTime hour = DateTime.now();
+    final S s = L10n.i;
     final String greeting = hour.hour < 12
-        ? 'Good morning'
-        : (hour.hour < 18 ? 'Good afternoon' : 'Good evening');
+        ? s.greetingMorning
+        : (hour.hour < 18 ? s.greetingAfternoon : s.greetingEvening);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -163,7 +167,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 2),
-                Text('Find your event gear', style: theme.textTheme.displayMedium),
+                Text(L10n.i.exploreHeadline, style: theme.textTheme.displayMedium),
               ],
             ),
           ),
@@ -201,9 +205,9 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
               },
               onSubmitted: (String value) =>
                   _applyQuery(search: value.trim()),
-              decoration: const InputDecoration(
-                hintText: 'Chairs, tents, speakers…',
-                prefixIcon: Icon(Icons.search_rounded, size: 20),
+              decoration: InputDecoration(
+                hintText: L10n.i.exploreSearchHint,
+                prefixIcon: const Icon(Icons.search_rounded, size: 20),
               ),
             ),
           ),
@@ -230,7 +234,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
         ),
         children: <Widget>[
           NeoChip(
-            label: 'All',
+            label: L10n.i.chipAll,
             selected: _category == null,
             onTap: () => _applyQuery(clearCategory: true, search: _search.text.trim()),
           ),
@@ -258,11 +262,14 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
     final ThemeData theme = Theme.of(context);
     final PaginatedList<Equipment> list = ref.watch(_listProvider);
 
-    final String count = '${list.meta['total'] ?? list.items.length} items';
+    final int total =
+        (list.meta['total'] as int?) ?? list.items.length;
+    final String count = L10n.i.itemCount(total);
 
     final List<String> active = <String>[
       if (_location != null) _location!,
-      if (_query.minPrice != null || _query.maxPrice != null) 'Price filter',
+      if (_query.minPrice != null || _query.maxPrice != null)
+        L10n.i.filterPriceChip,
       if (_query.date != null) Dates.short(_query.date!),
     ];
 
@@ -307,7 +314,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
                 });
                 ref.invalidate(_listProvider);
               },
-              child: const Text('Clear'),
+              child: Text(L10n.i.commonClear),
             ),
         ],
       ),
@@ -345,16 +352,17 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
     }
 
     if (page.isEmpty) {
+      final S s = L10n.i;
       return <Widget>[
         SliverFillRemaining(
           hasScrollBody: false,
           child: NeoEmptyState(
             icon: Icons.search_off_rounded,
-            title: _query.isFiltered ? 'No matches' : 'No equipment yet',
+            title: _query.isFiltered ? s.emptyNoMatchesTitle : s.emptyNoEquipmentTitle,
             message: _query.isFiltered
-                ? 'Try a different category, area or price range.'
-                : 'Be the first to list chairs, tables or sound on Neo.',
-            actionLabel: _query.isFiltered ? 'Clear filters' : null,
+                ? s.emptyNoMatchesBody
+                : s.emptyNoEquipmentBody,
+            actionLabel: _query.isFiltered ? s.emptyClearFilters : null,
             onAction: () {
               _search.clear();
               setState(() {
@@ -390,7 +398,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
       SliverToBoxAdapter(
         child: ListFooterLoader(
           loading: controller.isLoadingMore,
-          endLabel: page.hasMore ? null : 'That is everything for now',
+          endLabel: page.hasMore ? null : L10n.i.endOfList,
         ),
       ),
     ];
@@ -406,17 +414,20 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
         delegate: SliverChildListDelegate(children),
       );
 
-  String _shortLabel(EquipmentCategory category) => switch (category) {
-        EquipmentCategory.chairs => 'Chairs',
-        EquipmentCategory.tables => 'Tables',
-        EquipmentCategory.tents => 'Tents',
-        EquipmentCategory.speakers => 'Sound',
-        EquipmentCategory.lights => 'Lights',
-        EquipmentCategory.coolers => 'Coolers',
-        EquipmentCategory.generators => 'Power',
-        EquipmentCategory.decorations => 'Decor',
-        EquipmentCategory.other => 'Other',
-      };
+  String _shortLabel(EquipmentCategory category) {
+    final S s = L10n.i;
+    return switch (category) {
+      EquipmentCategory.chairs => s.catChairs,
+      EquipmentCategory.tables => s.catTables,
+      EquipmentCategory.tents => s.catTents,
+      EquipmentCategory.speakers => s.catSpeakers,
+      EquipmentCategory.lights => s.catLights,
+      EquipmentCategory.coolers => s.catCoolers,
+      EquipmentCategory.generators => s.catGenerators,
+      EquipmentCategory.decorations => s.catDecor,
+      EquipmentCategory.other => s.catOther,
+    };
+  }
 }
 
 class _FilterButton extends StatelessWidget {
@@ -480,6 +491,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final S s = L10n.i;
     final AsyncValue<List<RwandaLocation>> locations =
         ref.watch(locationsProvider);
 
@@ -494,12 +506,12 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Filters', style: theme.textTheme.headlineMedium),
+          Text(s.filterTitle, style: theme.textTheme.headlineMedium),
           const SizedBox(height: AppSpacing.lg),
-          Text('Where', style: theme.textTheme.titleSmall),
+          Text(s.filterWhere, style: theme.textTheme.titleSmall),
           const SizedBox(height: AppSpacing.xs),
           NeoField(
-            label: 'Sector or district',
+            label: s.filterSectorLabel,
             hint: 'Kigali - Nyarugenge',
             controller: _location,
             prefixIcon: Icons.place_outlined,
@@ -527,7 +539,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
           const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
-              Text('Daily price (RWF)', style: theme.textTheme.titleSmall),
+              Text(s.filterDailyPrice, style: theme.textTheme.titleSmall),
               const Spacer(),
               Text(
                 _priceLabel,
@@ -556,7 +568,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             }),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Text('Available on', style: theme.textTheme.titleSmall),
+          Text(s.filterAvailableOn, style: theme.textTheme.titleSmall),
           const SizedBox(height: AppSpacing.xs),
           NeoCard(
             onTap: _pickDate,
@@ -567,7 +579,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 Expanded(
                   child: Text(
                     _date == null
-                        ? 'Any date'
+                        ? s.filterAnyDate
                         : '${Dates.weekdayLong(_date!)} ${Dates.full(_date!)}',
                     style: theme.textTheme.titleSmall,
                   ),
@@ -578,7 +590,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                       _date = null;
                       _query = _query.copyWith(clearDate: true);
                     }),
-                    child: const Text('Clear'),
+                    child: Text(L10n.i.commonClear),
                   )
                 else
                   const Icon(Icons.chevron_right_rounded, size: 20),
@@ -587,7 +599,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
           ),
           const SizedBox(height: AppSpacing.xl),
           NeoButton(
-            label: 'Show results',
+            label: s.filterShowResults,
             onPressed: () {
               Navigator.of(context).pop(
                 _query.copyWith(location: _location.text.trim()),
@@ -596,7 +608,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
           ),
           const SizedBox(height: AppSpacing.xs),
           NeoButton(
-            label: 'Reset',
+            label: s.filterReset,
             variant: NeoButtonVariant.ghost,
             onPressed: () => Navigator.of(context).pop(const EquipmentQuery()),
           ),
@@ -608,7 +620,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   String get _priceLabel {
     final double? min = _query.minPrice;
     final double? max = _query.maxPrice;
-    if (min == null && max == null) return 'Any';
+    if (min == null && max == null) return L10n.i.filterAnyPrice;
     return '${min == null ? '0' : _shortPrice(min)} – '
         '${max == null ? '200K+' : _shortPrice(max)}';
   }
@@ -622,7 +634,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
       initialDate: _date ?? now.add(const Duration(days: 1)),
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
-      helpText: 'When do you need it?',
+      helpText: L10n.i.filterDateHelp,
     );
     if (picked != null) {
       setState(() {
@@ -645,7 +657,6 @@ class NotificationsButton extends ConsumerStatefulWidget {
 
 class _NotificationsButtonState extends ConsumerState<NotificationsButton> {
   int _unread = 0;
-  bool _loaded = false;
 
   @override
   void initState() {
@@ -661,11 +672,9 @@ class _NotificationsButtonState extends ConsumerState<NotificationsButton> {
       if (mounted) {
         setState(() {
           _unread = result.meta['total'] as int? ?? 0;
-          _loaded = true;
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _loaded = true);
     }
   }
 
@@ -683,7 +692,7 @@ class _NotificationsButtonState extends ConsumerState<NotificationsButton> {
         label: Text('$_unread'),
         child: const Icon(Icons.notifications_none_rounded, size: 24),
       ),
-      tooltip: 'Notifications',
+      tooltip: L10n.i.tooltipNotifications,
       style: IconButton.styleFrom(
         backgroundColor: theme.colorScheme.surface,
         shape: const CircleBorder(),

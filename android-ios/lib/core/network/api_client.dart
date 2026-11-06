@@ -184,6 +184,32 @@ class ApiClient {
   Future<dynamic> delete(String path, {Object? body}) =>
       _send(() => _dio.delete<dynamic>(path, data: body));
 
+  /// Multipart upload of a single file under the `file` field. Uses bytes so
+  /// it works identically on mobile and web.
+  Future<dynamic> upload(
+    String path, {
+    required List<int> bytes,
+    required String filename,
+    String? mimeType,
+    void Function(int sent, int total)? onProgress,
+  }) =>
+      _send(() => _dio.post<dynamic>(
+            path,
+            data: FormData.fromMap(<String, dynamic>{
+              'file': MultipartFile.fromBytes(
+                bytes,
+                filename: filename,
+                contentType:
+                    mimeType == null ? null : DioMediaType.parse(mimeType),
+              ),
+            }),
+            onSendProgress: onProgress,
+            options: Options(
+              sendTimeout: const Duration(minutes: 2),
+              receiveTimeout: const Duration(minutes: 2),
+            ),
+          ));
+
   static Options _options(bool skipAuth) =>
       Options(extra: skipAuth ? const {'skipAuth': true} : null);
 

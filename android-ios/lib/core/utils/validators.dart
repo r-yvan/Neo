@@ -1,10 +1,10 @@
+import '../l10n/strings.dart';
+
 /// Client-side mirrors of the backend's validation rules.
 ///
 /// The server rejects bad input with 400 and a `message` array; catching the
 /// obvious cases locally keeps the UX immediate without duplicating logic that
 /// matters (ownership, quota, date conflicts — those are server-enforced).
-library;
-
 abstract final class Validators {
   /// `RegisterDto.phone` accepts `07…`, `2507…` or `+2507…` plus 8 digits.
   static final RegExp phonePattern = RegExp(r'^(07|2507|\+2507)\d{8}$');
@@ -13,10 +13,11 @@ abstract final class Validators {
   static final RegExp nationalIdPattern = RegExp(r'^\d{16}$');
 
   static String? phone(String? value) {
+    final S s = L10n.i;
     final String v = (value ?? '').trim();
-    if (v.isEmpty) return 'Enter your phone number';
+    if (v.isEmpty) return s.valPhoneEmpty;
     if (!phonePattern.hasMatch(v)) {
-      return 'Enter a valid Rwandan number, e.g. 0780000000';
+      return s.valPhonePattern;
     }
     return null;
   }
@@ -30,9 +31,10 @@ abstract final class Validators {
   }
 
   static String? fullName(String? value) {
+    final S s = L10n.i;
     final String v = (value ?? '').trim();
-    if (v.isEmpty) return 'Enter your full name';
-    if (v.length < 2) return 'That name looks too short';
+    if (v.isEmpty) return s.valFullNameEmpty;
+    if (v.length < 2) return s.valFullNameShort;
     return null;
   }
 
@@ -40,67 +42,76 @@ abstract final class Validators {
     final String v = (value ?? '').trim();
     if (v.isEmpty) return null; // optional
     final RegExp re = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-    return re.hasMatch(v) ? null : 'Enter a valid email address';
+    return re.hasMatch(v) ? null : L10n.i.valEmailInvalid;
   }
 
   static String? password(String? value, {bool required = true}) {
+    final S s = L10n.i;
     final String v = value ?? '';
-    if (v.isEmpty) return required ? 'Choose a password' : null;
-    if (v.length < 6) return 'Use at least 6 characters';
+    if (v.isEmpty) return required ? s.valPasswordEmpty : null;
+    if (v.length < 6) return s.valPasswordShort;
     return null;
   }
 
   static String? nationalId(String? value) {
+    final S s = L10n.i;
     final String v = (value ?? '').trim();
-    if (v.isEmpty) return 'Enter your national ID';
+    if (v.isEmpty) return s.valIdEmpty;
     if (!nationalIdPattern.hasMatch(v)) {
-      return 'A national ID is 16 digits';
+      return s.valIdPattern;
     }
     return null;
   }
 
   static String? otp(String? value) {
+    final S s = L10n.i;
     final String v = (value ?? '').trim();
-    if (v.isEmpty) return 'Enter the 6-digit code';
-    if (!RegExp(r'^\d{6}$').hasMatch(v)) return 'The code is 6 digits';
+    if (v.isEmpty) return s.valOtpEmpty;
+    if (!RegExp(r'^\d{6}$').hasMatch(v)) return s.valOtpPattern;
     return null;
   }
 
   static String? title(String? value) {
+    final S s = L10n.i;
     final String v = (value ?? '').trim();
-    if (v.isEmpty) return 'Give your listing a title';
-    if (v.length < 4) return 'Use at least 4 characters';
+    if (v.isEmpty) return s.valTitleEmpty;
+    if (v.length < 4) return s.valTitleShort;
     return null;
   }
 
   static String? description(String? value) {
     final String v = (value ?? '').trim();
-    if (v.length > 2000) return 'Keep it under 2000 characters';
+    if (v.length > 2000) return L10n.i.valDescriptionLong;
     return null;
   }
 
   static String? location(String? value) {
     final String v = (value ?? '').trim();
-    if (v.isEmpty) return 'Where can the item be collected?';
+    if (v.isEmpty) return L10n.i.valLocationEmpty;
     return null;
   }
 
   static String? quantity(String? value, {int max = 100000}) {
+    final S s = L10n.i;
     final int? n = int.tryParse((value ?? '').trim());
-    if (n == null) return 'Enter a number';
-    if (n < 1) return 'At least 1';
-    if (n > max) return 'That is more than $max';
+    if (n == null) return s.valQuantityNumber;
+    if (n < 1) return s.valQuantityMin;
+    if (n > max) return s.valQuantityMax(max);
     return null;
   }
 
   static String? price(String? value) {
+    final S s = L10n.i;
     final num? n = num.tryParse((value ?? '').trim().replaceAll(',', ''));
-    if (n == null) return 'Enter a price in RWF';
-    if (n <= 0) return 'The price must be more than 0';
-    if (n > 100000000) return 'That price is out of range';
+    if (n == null) return s.valPriceNumber;
+    if (n <= 0) return s.valPriceZero;
+    if (n > 100000000) return s.valPriceRange;
     return null;
   }
 
-  static String? required(String? value, {String message = 'This field is required'}) =>
-      (value ?? '').trim().isEmpty ? message : null;
+  static String? required(String? value, {String? message}) => (value ?? '')
+          .trim()
+          .isEmpty
+      ? (message ?? L10n.i.valFieldRequired)
+      : null;
 }

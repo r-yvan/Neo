@@ -14,10 +14,7 @@ import '../../data/repositories/social_repository.dart';
 import '../booking/booking_flow_page.dart';
 import '../chat/chat_page.dart';
 import '../profile/public_profile_page.dart';
-import '../reviews/reviews_page.dart';
-import '../reviews/write_review_sheet.dart';
 import 'equipment_form_page.dart';
-import 'widgets/equipment_card.dart';
 
 /// Single listing view: carousel, availability calendar, price breakdown and
 /// the primary call-to-action pinned to the bottom.
@@ -380,10 +377,6 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
 
   Widget _calendar(Equipment item) {
     final Set<DateTime> blocked = item.blockedDates;
-    final Set<DateTime> today = <DateTime>{
-      DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
-    };
-
     return NeoCard(
       padding: const EdgeInsets.fromLTRB(6, 6, 6, 10),
       child: TableCalendar<Object>(
@@ -422,7 +415,7 @@ class _EquipmentDetailPageState extends ConsumerState<EquipmentDetailPage> {
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: AppFontWeight.medium,
           ),
-          disabledTextStyle: TextStyle(
+          disabledTextStyle: const TextStyle(
             fontFamily: kFontFamily,
             color: AppColors.grey300,
             decoration: TextDecoration.lineThrough,

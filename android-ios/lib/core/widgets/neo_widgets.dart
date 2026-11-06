@@ -7,11 +7,13 @@ library;
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../theme/app_colors.dart';
+import '../l10n/strings.dart';
 import '../theme/app_typography.dart';
 import '../utils/formatters.dart';
 
@@ -61,7 +63,7 @@ class NeoScaffold extends StatelessWidget {
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_rounded),
                 onPressed: () => Navigator.of(context).maybePop(),
-                tooltip: 'Back',
+                tooltip: L10n.i.commonBack,
               )
             : leading,
         title: Column(
@@ -367,7 +369,7 @@ class StatTile extends StatelessWidget {
     required this.value,
     this.icon,
     this.caption,
-    this.tone = AppColors.grey900,
+    this.tone,
     this.onTap,
   });
 
@@ -375,7 +377,9 @@ class StatTile extends StatelessWidget {
   final String value;
   final IconData? icon;
   final String? caption;
-  final Color tone;
+
+  /// Value colour; defaults to the theme's on-surface so it works in dark mode.
+  final Color? tone;
   final VoidCallback? onTap;
 
   @override
@@ -413,7 +417,7 @@ class StatTile extends StatelessWidget {
               style: theme.textTheme.displayLarge?.copyWith(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: tone,
+                color: tone ?? theme.colorScheme.onSurface,
               ),
             ),
           ),
@@ -456,7 +460,9 @@ class EquipmentImage extends StatelessWidget {
   final IconData? fallbackIcon;
   final String? fallbackLabel;
 
-  bool get _isLocal => source.startsWith('/') || source.startsWith('file:');
+  /// Device files (legacy drafts) — never on web, where `dart:io` is absent.
+  bool get _isLocal =>
+      !kIsWeb && (source.startsWith('/') || source.startsWith('file:'));
 
   @override
   Widget build(BuildContext context) {
@@ -677,7 +683,7 @@ class RatingRow extends StatelessWidget {
         Icon(Icons.star_rounded, size: size + 2, color: AppColors.star),
         const SizedBox(width: 3),
         Text(
-          rated ? rating.toStringAsFixed(1) : 'New',
+          rated ? rating.toStringAsFixed(1) : L10n.i.ratingNew,
           style: theme.textTheme.labelMedium?.copyWith(
             fontWeight: AppFontWeight.semiBold,
             color: theme.colorScheme.onSurface,
@@ -685,7 +691,7 @@ class RatingRow extends StatelessWidget {
         ),
         if (showCount && rated) ...[
           const SizedBox(width: 4),
-          Text('(${reviewCount})', style: theme.textTheme.bodySmall),
+          Text('($reviewCount)', style: theme.textTheme.bodySmall),
         ],
       ],
     );
@@ -823,9 +829,9 @@ class NeoErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return NeoEmptyState(
       icon: Icons.cloud_off_rounded,
-      title: 'Could not load',
+      title: L10n.i.errorCouldNotLoad,
       message: message,
-      actionLabel: onRetry == null ? null : 'Try again',
+      actionLabel: onRetry == null ? null : L10n.i.errorTryAgain,
       onAction: onRetry,
     );
   }
@@ -1102,7 +1108,7 @@ Future<bool> confirmNeo(
   BuildContext context, {
   required String title,
   required String message,
-  String confirmLabel = 'Confirm',
+  String? confirmLabel,
   bool destructive = false,
 }) async {
   final bool? result = await showDialog<bool>(
@@ -1113,7 +1119,7 @@ Future<bool> confirmNeo(
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Cancel'),
+          child: Text(L10n.i.commonCancel),
         ),
         FilledButton(
           style: destructive
@@ -1123,7 +1129,7 @@ Future<bool> confirmNeo(
                 )
               : FilledButton.styleFrom(minimumSize: const Size(88, 44)),
           onPressed: () => Navigator.of(ctx).pop(true),
-          child: Text(confirmLabel),
+          child: Text(confirmLabel ?? L10n.i.commonConfirm),
         ),
       ],
     ),
@@ -1199,7 +1205,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
               width: double.infinity,
               height: widget.height,
               radius: 0,
-              fallbackLabel: widget.images.isEmpty ? 'No photo yet' : null,
+              fallbackLabel:
+                  widget.images.isEmpty ? L10n.i.photoNoPhotoYet : null,
             ),
           ),
           if (widget.categoryLabel != null)

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+
+import '../../core/l10n/strings.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
@@ -62,7 +63,12 @@ class _MyBookingsPageState extends ConsumerState<MyBookingsPage>
   bool get _initialLoaded => _pages[_role]!.items.isNotEmpty;
 
   Future<void> _load({bool append = false}) async {
+    // Capture the request's role/status so a slow response can never land
+    // in a list the user has since switched away from.
     final String key = _key;
+    final BookingRole role = _role;
+    final BookingStatus? status = _status;
+    final int nextPage = append ? _pages[role]!.page + 1 : 1;
     setState(() {
       _loading.add(key);
       if (!append) _errors[key] = null;
@@ -70,15 +76,16 @@ class _MyBookingsPageState extends ConsumerState<MyBookingsPage>
     try {
       final PaginatedList<Booking> page =
           await ref.read(bookingRepositoryProvider).mine(
-                role: _role,
-                status: _status,
+                role: role,
+                status: status,
+                page: nextPage,
                 limit: 20,
               );
-      if (!mounted) return;
+      if (!mounted || key != _key) return;
       setState(() {
-        _pages[_role] = append
+        _pages[role] = append
             ? PaginatedList<Booking>(
-                items: <Booking>[..._pages[_role]!.items, ...page.items],
+                items: <Booking>[..._pages[role]!.items, ...page.items],
                 meta: page.meta,
               )
             : page;
@@ -128,24 +135,26 @@ class _MyBookingsPageState extends ConsumerState<MyBookingsPage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Bookings', style: theme.textTheme.displayMedium),
+                      Text(L10n.i.bkTitle, style: theme.textTheme.displayMedium),
                       const SizedBox(height: AppSpacing.md),
                       SegmentedButton<BookingRole>(
-                        segments: const <ButtonSegment<BookingRole>>[
+                        segments: <ButtonSegment<BookingRole>>[
                           ButtonSegment<BookingRole>(
                             value: BookingRole.renter,
-                            label: Text('Renting'),
-                            icon: Icon(Icons.shopping_bag_outlined, size: 16),
+                            label: Text(L10n.i.bkTabRenting),
+                            icon: const Icon(Icons.shopping_bag_outlined, size: 16),
                           ),
                           ButtonSegment<BookingRole>(
                             value: BookingRole.owner,
-                            label: Text('My items'),
-                            icon: Icon(Icons.storefront_outlined, size: 16),
+                            label: Text(L10n.i.bkTabMine),
+                            icon: const Icon(Icons.storefront_outlined, size: 16),
                           ),
                         ],
                         selected: <BookingRole>{_role},
-                        onSelectionChanged: (Set<BookingRole> value) =>
-                            setState(() => _role = value.first),
+                        onSelectionChanged: (Set<BookingRole> value) {
+                          setState(() => _role = value.first);
+                          _load();
+                        },
                         showSelectedIcon: false,
                         style: SegmentedButton.styleFrom(
                           selectedBackgroundColor: AppColors.accentSoft,
@@ -161,7 +170,7 @@ class _MyBookingsPageState extends ConsumerState<MyBookingsPage>
                           scrollDirection: Axis.horizontal,
                           children: <Widget>[
                             NeoChip(
-                              label: 'All',
+                              label: L10n.i.bkChipAll,
                               dense: true,
                               selected: _status == null,
                               onTap: () => setState(() {
@@ -234,13 +243,13 @@ class _MyBookingsPageState extends ConsumerState<MyBookingsPage>
                 ? Icons.receipt_long_outlined
                 : Icons.storefront_outlined,
             title: _role == BookingRole.renter
-                ? 'No bookings yet'
-                : 'No requests yet',
+                ? L10n.i.bkEmptyMine
+                : L10n.i.bkEmptyOwned,
             message: _role == BookingRole.renter
-                ? 'Find equipment on Explore and send your first rental request.'
-                : 'When a renter requests one of your items, it will appear here.',
+                ? L10n.i.bkEmptyMineBody
+                : L10n.i.bkEmptyOwnedBody,
             actionLabel:
-                _role == BookingRole.renter ? 'Browse equipment' : null,
+                _role == BookingRole.renter ? L10n.i.bkBrowseCta : null,
             onAction: () => openShellTab(context, ShellTab.explore),
           ),
         ),
@@ -268,7 +277,7 @@ class _MyBookingsPageState extends ConsumerState<MyBookingsPage>
       SliverToBoxAdapter(
         child: ListFooterLoader(
           loading: _loading.contains(key),
-          endLabel: page.hasMore ? null : 'No more bookings',
+          endLabel: page.hasMore ? null : L10n.i.bkEndList,
         ),
       ),
     ];
@@ -320,7 +329,7 @@ class _BookingCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        equipment?.title ?? 'Booking',
+                        equipment?.title ?? L10n.i.bkFallbackTitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleSmall,
@@ -331,7 +340,8 @@ class _BookingCard extends ConsumerWidget {
                         style: theme.textTheme.bodySmall,
                       ),
                       Text(
-                        '${booking.quantity} unit${booking.quantity == 1 ? '' : 's'} · ${asOwner ? 'renter' : counterparty?.fullName ?? 'owner'}',
+                        '${L10n.i.flowUnitCount(booking.quantity)} · '
+                        '${asOwner ? L10n.i.roleRenter : (counterparty?.fullName ?? L10n.i.roleOwner)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall,
@@ -369,19 +379,19 @@ class _BookingCard extends ConsumerWidget {
                   const SizedBox(width: 5),
                   Text(
                     booking.paymentStatus == PaymentStatus.paid
-                        ? 'Paid · owner receives ${Money.format(booking.ownerPayout)}'
-                        : 'Payment pending',
+                        ? L10n.i.bkPaidInfo(Money.format(booking.ownerPayout))
+                        : L10n.i.bkPaymentPending,
                     style: theme.textTheme.bodySmall,
                   ),
                   const Spacer(),
                   if (asOwner && booking.status == BookingStatus.pending) ...[
                     TextButton(
                       onPressed: () => _transition(context, ref, 'reject'),
-                      child: const Text('Decline'),
+                      child: Text(L10n.i.bkDecline),
                     ),
                     TextButton(
                       onPressed: () => _transition(context, ref, 'accept'),
-                      child: const Text('Accept'),
+                      child: Text(L10n.i.bkAccept),
                     ),
                   ] else if (!asOwner &&
                       booking.status == BookingStatus.accepted &&
@@ -391,7 +401,7 @@ class _BookingCard extends ConsumerWidget {
                         openShellTab(context, 0);
                         Navigator.of(context).pop();
                       },
-                      child: const Text('Pay now'),
+                      child: Text(L10n.i.bkPayNow),
                     ),
                   ],
                 ],
@@ -420,7 +430,7 @@ class _BookingCard extends ConsumerWidget {
       if (context.mounted) {
         showNeoSnack(
           context,
-          'Booking ${updated.status.label.toLowerCase()}',
+          L10n.i.bdSnack(updated.status.label),
           icon: Icons.check_circle_outline_rounded,
         );
       }

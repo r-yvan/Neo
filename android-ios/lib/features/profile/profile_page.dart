@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/l10n/app_locale.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_typography.dart';
-import '../../core/utils/formatters.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import '../common/language_picker.dart';
+import '../common/photo_picker.dart';
+import '../admin/admin_console_page.dart';
 import '../notifications/notification_settings_page.dart';
+import '../payments/payment_history_page.dart';
+import '../trust/my_reports_page.dart';
 import '../reviews/reviews_page.dart';
 import '../shell/root_shell.dart';
 
@@ -65,6 +68,7 @@ class ProfilePage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               _Header(user: user),
+              const _AdminEntry(),
               const SizedBox(height: AppSpacing.lg),
               _AccountCard(user: user),
               const SizedBox(height: AppSpacing.lg),
@@ -102,6 +106,7 @@ class _Header extends ConsumerWidget {
       child: Row(
         children: <Widget>[
           Stack(
+            clipBehavior: Clip.none,
             children: <Widget>[
               NeoAvatar(
                 initials: user.initials,
@@ -113,7 +118,12 @@ class _Header extends ConsumerWidget {
                 bottom: -4,
                 child: Material(
                   color: AppColors.accent,
-                  shape: const CircleBorder(),
+                  shape: CircleBorder(
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.surface,
+                      width: 2,
+                    ),
+                  ),
                   child: InkWell(
                     customBorder: const CircleBorder(),
                     onTap: () => _editAvatar(context, ref),
@@ -177,63 +187,72 @@ class _Header extends ConsumerWidget {
 
 Future<void> _editAvatar(BuildContext context, WidgetRef ref) async {
   final S s = L10n.i;
-  final TextEditingController url = TextEditingController();
-  final String? value = await showNeoSheet<String>(
+  final ThemeData theme = Theme.of(context);
+  final bool hasPhoto =
+      (ref.read(sessionProvider).user?.profileImage ?? '').isNotEmpty;
+
+  Widget option(BuildContext ctx, IconData icon, String label, String value,
+          {bool danger = false}) =>
+      ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: danger ? AppColors.dangerSoft : AppColors.accentSoft,
+            borderRadius: AppRadii.mdAll,
+          ),
+          child: Icon(icon,
+              color: danger ? AppColors.danger : AppColors.accent),
+        ),
+        title: Text(label,
+            style: theme.textTheme.titleSmall
+                ?.copyWith(color: danger ? AppColors.danger : null)),
+        onTap: () => Navigator.of(ctx).pop(value),
+      );
+
+  final String? choice = await showNeoSheet<String>(
     context,
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.lg,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    child: Builder(
+      builder: (BuildContext ctx) => Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(s.profilePhotoSheetTitle,
-              style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: AppSpacing.xs),
-          Text(s.profilePhotoSheetHint,
-              style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: AppSpacing.md),
-          NeoField(
-            label: s.imageFieldLabel,
-            controller: url,
-            keyboardType: TextInputType.url,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: NeoButton(
-                  label: s.commonRemove,
-                  variant: NeoButtonVariant.ghost,
-                  expand: false,
-                  onPressed: () => Navigator.of(context).pop('__remove__'),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: NeoButton(
-                  label: s.commonSave,
-                  onPressed: () => Navigator.of(context).pop(url.text.trim()),
-                ),
-              ),
-            ],
-          ),
+          Text(s.profilePhotoSheetTitle, style: theme.textTheme.titleLarge),
+          const SizedBox(height: AppSpacing.sm),
+          option(ctx, Icons.photo_camera_outlined, s.photoTakeNew, 'camera'),
+          option(ctx, Icons.photo_library_outlined, s.photoFromGallery,
+              'gallery'),
+          if (hasPhoto)
+            option(ctx, Icons.delete_outline_rounded, s.avatarRemove, 'remove',
+                danger: true),
         ],
       ),
     ),
   );
-  if (value == null) return;
+  if (choice == null || !context.mounted) return;
+
   final repo = ref.read(usersRepositoryProvider);
   try {
-    final AppUser updated =
-        value == '__remove__' ? await repo.removeAvatar() : await repo.setAvatar(value);
+    if (choice == 'remove') {
+      final AppUser updated = await repo.removeAvatar();
+      ref.read(sessionProvider.notifier).applyUser(updated);
+      if (context.mounted) {
+        showNeoSnack(context, s.avatarRemoved, icon: Icons.check_rounded);
+      }
+      return;
+    }
+    final String? url = await pickAndUploadPhoto(
+      context,
+      ref,
+      source: choice == 'camera' ? ImageSource.camera : ImageSource.gallery,
+      maxWidth: 800,
+    );
+    if (url == null) return;
+    final AppUser updated = await repo.setAvatar(url);
     ref.read(sessionProvider.notifier).applyUser(updated);
     if (context.mounted) {
-      showNeoSnack(context, L10n.i.profilePhotoUpdated, icon: Icons.check_rounded);
+      showNeoSnack(context, s.avatarUpdated, icon: Icons.check_rounded);
     }
   } on ApiException catch (e) {
     if (context.mounted) showNeoSnack(context, e.message, isError: true);
@@ -267,7 +286,7 @@ class _AccountCard extends ConsumerWidget {
             subtitle: s.accountEditSubtitle,
             onTap: () => _editProfile(context, ref),
           ),
-          _Divider(),
+          const _Divider(),
           _Row(
             icon: Icons.lock_outline_rounded,
             title: s.accountChangePassword,
@@ -311,7 +330,7 @@ class _AccountCard extends ConsumerWidget {
             subtitle: user.phone,
             destructive: true,
             onTap: () async {
-              final bool? ok = await confirmNeo(
+              final bool ok = await confirmNeo(
                 context,
                 title: s.signOutTitle,
                 message: s.signOutMessage,
@@ -529,11 +548,14 @@ Future<void> _verifyId(BuildContext context, WidgetRef ref) async {
 
 // ------------------------------------------------------------ activity card
 
-class _ActivityCard extends StatelessWidget {
+class _ActivityCard extends ConsumerWidget {
   const _ActivityCard();
 
+  void _push(BuildContext context, Widget page) => Navigator.of(context)
+      .push<void>(MaterialPageRoute<void>(builder: (BuildContext _) => page));
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final S s = L10n.i;
     final shell = context;
     return NeoCard(
@@ -561,6 +583,12 @@ class _ActivityCard extends StatelessWidget {
           ),
           const _Divider(),
           _Row(
+            icon: Icons.account_balance_wallet_outlined,
+            title: s.actPayments,
+            onTap: () => _push(context, const PaymentHistoryPage()),
+          ),
+          const _Divider(),
+          _Row(
             icon: Icons.reviews_rounded,
             title: s.actMyReviews,
             onTap: () => Navigator.of(context).push<void>(
@@ -568,6 +596,12 @@ class _ActivityCard extends StatelessWidget {
                 builder: (BuildContext _) => const ReviewsPage(mine: true),
               ),
             ),
+          ),
+          const _Divider(),
+          _Row(
+            icon: Icons.flag_outlined,
+            title: s.actReports,
+            onTap: () => _push(context, const MyReportsPage()),
           ),
           const _Divider(),
           _Row(
@@ -659,7 +693,7 @@ class _PreferencesCard extends ConsumerWidget {
               }
             },
           ),
-          _Divider(),
+          const _Divider(),
           _Row(
             icon: Icons.translate_rounded,
             title: s.prefsLanguage,
@@ -764,7 +798,7 @@ class _Row extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey),
+            const Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey),
           ],
         ),
       ),
@@ -778,5 +812,70 @@ class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Divider(height: 1, color: Theme.of(context).colorScheme.outline);
+  }
+}
+
+/// Shown only to ADMIN accounts.
+class _AdminEntry extends ConsumerWidget {
+  const _AdminEntry();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!(ref.watch(sessionProvider).user?.isAdmin ?? false)) {
+      return const SizedBox.shrink();
+    }
+    final S s = L10n.i;
+    final ThemeData theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.md),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: AppRadii.lgAll,
+          onTap: () => Navigator.of(context).push<void>(MaterialPageRoute<void>(
+              builder: (BuildContext _) => const AdminConsolePage())),
+          child: Ink(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: const BoxDecoration(
+              borderRadius: AppRadii.lgAll,
+              gradient: LinearGradient(
+                colors: <Color>[AppColors.grey900, AppColors.grey800],
+              ),
+              boxShadow: AppShadows.raised,
+            ),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: AppRadii.mdAll,
+                  ),
+                  child: const Icon(Icons.admin_panel_settings_rounded,
+                      color: Colors.white),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(s.actAdmin,
+                          style: theme.textTheme.titleSmall
+                              ?.copyWith(color: Colors.white)),
+                      const SizedBox(height: 2),
+                      Text(s.actAdminSub,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: AppColors.grey400)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

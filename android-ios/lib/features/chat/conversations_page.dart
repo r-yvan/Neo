@@ -115,9 +115,9 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
   List<Widget> _body(ThemeData theme) {
     if (_loading && _items.isEmpty) {
       return <Widget>[
-        SliverFillRemaining(
+        const SliverFillRemaining(
           hasScrollBody: false,
-          child: const NeoLoading(),
+          child: NeoLoading(),
         ),
       ];
     }
@@ -131,7 +131,7 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
     }
     if (_items.isEmpty) {
       return <Widget>[
-        SliverFillRemaining(
+        const SliverFillRemaining(
           hasScrollBody: false,
           child: NeoEmptyState(
             icon: Icons.forum_outlined,

@@ -166,7 +166,7 @@ class EquipmentRepository {
       _page(await _get(ApiPaths.equipmentMy, query: {
         'page': page,
         'limit': limit,
-        if (search != null && search!.isNotEmpty) 'search': search,
+        if (search != null && search.isNotEmpty) 'search': search,
       }));
 
   Future<Equipment> byId(String id) async =>

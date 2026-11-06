@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 
+import '../../core/l10n/strings.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
@@ -12,13 +12,13 @@ import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/equipment_repository.dart';
 import '../auth/login_page.dart' show NeoErrorBanner;
+import '../common/photo_picker.dart';
 import 'availability_page.dart';
 
 /// Create or edit a listing.
 ///
-/// Images are stored as strings in the API, so this screen supports both a
-/// device pick (stored as an absolute file path and rendered locally) and a
-/// direct URL entry for assets already hosted somewhere.
+/// Photos are uploaded to `POST /uploads` the moment they are picked; the
+/// listing only ever stores the returned public URLs.
 class EquipmentFormPage extends ConsumerStatefulWidget {
   const EquipmentFormPage({super.key, this.existing});
 
@@ -49,12 +49,16 @@ class _EquipmentFormPageState extends ConsumerState<EquipmentFormPage> {
           : widget.existing!.depositAmount!.round().toString());
   late final TextEditingController _location =
       TextEditingController(text: widget.existing?.location ?? '');
-  final TextEditingController _imageUrl = TextEditingController();
 
   late EquipmentCategory _category =
       widget.existing?.category ?? EquipmentCategory.chairs;
-  late List<String> _images =
+  late final List<String> _originalImages =
       List<String>.from(widget.existing?.images ?? const <String>[]);
+  late List<String> _images = List<String>.from(_originalImages);
+
+  /// Upload progress (0–1) per in-flight photo, keyed by a local token.
+  final Map<int, double> _uploads = <int, double>{};
+  int _uploadSeq = 0;
   bool _busy = false;
   String? _error;
 
@@ -66,52 +70,57 @@ class _EquipmentFormPageState extends ConsumerState<EquipmentFormPage> {
     _price.dispose();
     _deposit.dispose();
     _location.dispose();
-    _imageUrl.dispose();
     super.dispose();
   }
 
-  Future<void> _pickImage(ImageSource source) async {
-    try {
-      final XFile? picked = await ImagePicker().pickImage(
-        source: source,
-        imageQuality: 82,
-        maxWidth: 1600,
-      );
-      if (picked == null) return;
-      setState(() => _images = <String>[..._images, picked.path]);
-    } catch (e) {
-      if (mounted)
-        showNeoSnack(context, 'Could not open the gallery', isError: true);
-    }
-  }
-
-  void _addImageUrl() {
-    final String url = _imageUrl.text.trim();
-    if (url.isEmpty) return;
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      showNeoSnack(context, 'Enter a full http(s) URL', isError: true);
-      return;
-    }
+  Future<void> _addPhoto() async {
+    final int token = _uploadSeq++;
+    final String? url = await pickAndUploadPhoto(
+      context,
+      ref,
+      onPicked: () => setState(() => _uploads[token] = 0),
+      onProgress: (double v) {
+        if (mounted) setState(() => _uploads[token] = v);
+      },
+    );
+    if (!mounted) return;
     setState(() {
-      _images = <String>[..._images, url];
-      _imageUrl.clear();
+      _uploads.remove(token);
+      if (url != null && url.isNotEmpty) _images = <String>[..._images, url];
     });
   }
 
-  Future<void> _removeImage(int index) async {
-    final String source = _images[index];
+  void _removeImage(int index) {
     setState(() => _images = List<String>.from(_images)..removeAt(index));
+  }
 
-    // Persist the removal when the listing already exists.
-    if (widget.existing != null) {
-      try {
-        await ref
-            .read(equipmentRepositoryProvider)
-            .removeImage(widget.existing!.id, '$index');
-      } catch (_) {
-        // Local state is already correct; the next full save reconciles.
-      }
+  void _makeCover(int index) {
+    if (index == 0) return;
+    setState(() {
+      final List<String> next = List<String>.from(_images);
+      final String picked = next.removeAt(index);
+      _images = <String>[picked, ...next];
+    });
+  }
+
+  /// Applies photo changes to an existing listing (the update DTO does not
+  /// carry images, so additions/removals use the dedicated endpoints).
+  Future<Equipment> _syncImages(EquipmentRepository repo, Equipment saved) async {
+    Equipment current = saved;
+    final bool reordered = _images.isNotEmpty &&
+        _originalImages.isNotEmpty &&
+        _images.first != _originalImages.first;
+    final List<String> toRemove = reordered
+        ? _originalImages
+        : _originalImages.where((String u) => !_images.contains(u)).toList();
+    final List<String> toAdd = reordered
+        ? _images
+        : _images.where((String u) => !_originalImages.contains(u)).toList();
+    for (final String url in toRemove) {
+      current = await repo.removeImage(saved.id, url);
     }
+    if (toAdd.isNotEmpty) current = await repo.addImages(saved.id, toAdd);
+    return current;
   }
 
   EquipmentDraft _draft() => EquipmentDraft(
@@ -130,6 +139,10 @@ class _EquipmentFormPageState extends ConsumerState<EquipmentFormPage> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_uploads.isNotEmpty) {
+      showNeoSnack(context, L10n.i.formPhotosWaitUpload, isError: true);
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
@@ -138,12 +151,11 @@ class _EquipmentFormPageState extends ConsumerState<EquipmentFormPage> {
       final EquipmentRepository repo = ref.read(equipmentRepositoryProvider);
       Equipment saved;
       if (widget.existing == null) {
+        // Images travel in the create body — no second call needed.
         saved = await repo.create(_draft());
-        if (_images.isNotEmpty) {
-          saved = await repo.addImages(saved.id, _images);
-        }
       } else {
         saved = await repo.update(widget.existing!.id, _draft());
+        saved = await _syncImages(repo, saved);
       }
       if (!mounted) return;
       Navigator.of(context).pop(saved);
@@ -337,106 +349,107 @@ class _EquipmentFormPageState extends ConsumerState<EquipmentFormPage> {
   }
 
   Widget _photos(ThemeData theme) {
+    final S s = L10n.i;
+    const double tile = 96;
+    final bool canAdd = _images.length + _uploads.length < 6;
     return NeoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Photos', style: theme.textTheme.titleSmall),
+          Text(s.formPhotosTitle, style: theme.textTheme.titleSmall),
           const SizedBox(height: 2),
-          Text(
-            'Listings with photos are booked far more often. Add up to six.',
-            style: theme.textTheme.bodySmall,
-          ),
+          Text(s.formPhotosHint, style: theme.textTheme.bodySmall),
           const SizedBox(height: AppSpacing.sm),
           SizedBox(
-            height: 84,
+            height: tile,
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: <Widget>[
                 for (int i = 0; i < _images.length; i++)
                   Padding(
                     padding: const EdgeInsets.only(right: AppSpacing.xs),
-                    child: Stack(
-                      children: [
-                        EquipmentImage(
-                          source: _images[i],
-                          width: 84,
-                          height: 84,
-                          radius: AppRadii.md,
-                        ),
-                        Positioned(
-                          top: 2,
-                          right: 2,
-                          child: Material(
-                            color: Colors.black.withValues(alpha: 0.55),
-                            shape: const CircleBorder(),
-                            child: InkWell(
-                              customBorder: const CircleBorder(),
-                              onTap: () => _removeImage(i),
-                              child: const Padding(
-                                padding: EdgeInsets.all(3),
-                                child: Icon(Icons.close_rounded,
-                                    size: 14, color: Colors.white),
+                    child: GestureDetector(
+                      onLongPress: () => _makeCover(i),
+                      child: Stack(
+                        children: [
+                          EquipmentImage(
+                            source: _images[i],
+                            width: tile,
+                            height: tile,
+                            radius: AppRadii.md,
+                          ),
+                          if (i == 0)
+                            Positioned(
+                              left: 6,
+                              bottom: 6,
+                              child: NeoBadge(
+                                  label: s.photoCover, tone: BadgeTone.accent),
+                            ),
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Material(
+                              color: Colors.black.withValues(alpha: 0.55),
+                              shape: const CircleBorder(),
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: () => _removeImage(i),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(4),
+                                  child: Icon(Icons.close_rounded,
+                                      size: 14, color: Colors.white),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                if (_images.length < 6)
-                  _addTile(() => _pickImage(ImageSource.gallery)),
+                for (final double progress in _uploads.values)
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.xs),
+                    child: _UploadingTile(size: tile, progress: progress),
+                  ),
+                if (canAdd) _addTile(tile, _busy ? null : _addPhoto),
               ],
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Row(
-            children: [
-              Expanded(
-                child: NeoField(
-                  label: 'Or paste an image URL',
-                  controller: _imageUrl,
-                  keyboardType: TextInputType.url,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _addImageUrl(),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: NeoIconButton(
-                  icon: Icons.add_rounded,
-                  tooltip: 'Add URL',
-                  filled: true,
-                  onPressed: _addImageUrl,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          NeoButton(
-            label: 'Take a photo',
-            variant: NeoButtonVariant.ghost,
-            icon: Icons.camera_alt_outlined,
-            onPressed: () => _pickImage(ImageSource.camera),
           ),
         ],
       ),
     );
   }
 
-  Widget _addTile(VoidCallback onTap) {
+  Widget _addTile(double size, VoidCallback? onTap) {
     return Material(
-      color: AppColors.accentSoft,
+      color: AppColors.accentSofter,
       borderRadius: AppRadii.mdAll,
       child: InkWell(
         borderRadius: AppRadii.mdAll,
         onTap: onTap,
-        child: SizedBox(
-          width: 84,
-          height: 84,
-          child:
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            borderRadius: AppRadii.mdAll,
+            border: Border.all(
+                color: AppColors.accent.withValues(alpha: 0.35), width: 1.2),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
               const Icon(Icons.add_a_photo_outlined, color: AppColors.accent),
+              const SizedBox(height: 6),
+              Text(
+                L10n.i.photoChooseSource,
+                textAlign: TextAlign.center,
+                style: Theme.of(context)
+                    .textTheme
+                    .labelSmall
+                    ?.copyWith(color: AppColors.accent),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -468,3 +481,39 @@ class _EquipmentFormPageState extends ConsumerState<EquipmentFormPage> {
 
 /// Convenience for callers that just need "today" in the local timezone.
 DateTime today() => Dates.dayOnly(DateTime.now());
+
+class _UploadingTile extends StatelessWidget {
+  const _UploadingTile({required this.size, required this.progress});
+
+  final double size;
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: AppRadii.mdAll,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(
+              value: progress <= 0 || progress >= 1 ? null : progress,
+              strokeWidth: 2.6,
+              color: AppColors.accent,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(L10n.i.photoUploading, style: theme.textTheme.labelSmall),
+        ],
+      ),
+    );
+  }
+}

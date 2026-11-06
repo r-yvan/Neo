@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/strings.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/validators.dart';
+import '../../core/widgets/illustrations/neo_illustration.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
@@ -16,7 +17,7 @@ class OtpPage extends ConsumerStatefulWidget {
   const OtpPage({
     super.key,
     required this.phone,
-    this.title = 'Verify your phone',
+    this.title,
     this.subtitle,
     this.dispatch,
     this.onVerify,
@@ -26,7 +27,7 @@ class OtpPage extends ConsumerStatefulWidget {
   });
 
   final String phone;
-  final String title;
+  final String? title;
   final String? subtitle;
   final OtpDispatch? dispatch;
   final Future<void> Function(String otp)? onVerify;
@@ -93,7 +94,7 @@ class _OtpPageState extends ConsumerState<OtpPage> {
       final OtpDispatch dispatch =
           await ref.read(sessionProvider.notifier).sendOtp(widget.phone);
       if (mounted) {
-        showNeoSnack(context, 'A new code has been sent',
+        showNeoSnack(context, L10n.i.otpResentSnack,
             icon: Icons.sms_rounded);
         setState(() {});
         // Re-nudge the countdown by rebuilding with a fresh dispatch.
@@ -115,7 +116,8 @@ class _OtpPageState extends ConsumerState<OtpPage> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: true,
-        title: Text(widget.title, style: theme.textTheme.titleLarge),
+        title: Text(widget.title ?? L10n.i.otpVerifyTitle,
+            style: theme.textTheme.titleLarge),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -128,9 +130,10 @@ class _OtpPageState extends ConsumerState<OtpPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const NeoIllustration(kind: IllustrationKind.otp, height: 180),
+              const SizedBox(height: AppSpacing.md),
               Text(
-                widget.subtitle ??
-                    'Enter the code we sent to your phone to continue.',
+                widget.subtitle ?? L10n.i.otpDefaultSubtitle,
                 style: theme.textTheme.bodyLarge,
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -147,7 +150,7 @@ class _OtpPageState extends ConsumerState<OtpPage> {
               ],
               const SizedBox(height: AppSpacing.xl),
               NeoButton(
-                label: 'Verify',
+                label: L10n.i.otpVerifyCta,
                 loading: _busy,
                 onPressed: _busy ? null : _verify,
               ),

@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/strings.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/validators.dart';
+import '../../core/widgets/illustrations/neo_illustration.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/providers.dart';
 import 'login_page.dart' show NeoErrorBanner;
-import 'otp_page.dart';
 
 /// Registration. `POST /auth/register` creates the account with the RENTER
 /// role and returns tokens plus a fresh OTP, so the user lands in the
@@ -59,7 +60,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       if (mounted) {
         // Registered and signed in — the router redirects to /home.
         showNeoSnack(
-            context, 'Welcome to Neo, ${_name.text.trim().split(' ').first}!');
+            context,
+            L10n.i.authWelcomeSnack(
+                _name.text.trim().split(' ').first));
       }
     } on ApiException catch (e) {
       setState(() => _error = e.message);
@@ -71,12 +74,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final S s = L10n.i;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: true,
-        title: Text('Create your account', style: theme.textTheme.titleLarge),
+        title: Text(s.authRegisterTitle, style: theme.textTheme.titleLarge),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -91,13 +95,16 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const NeoIllustration(
+                    kind: IllustrationKind.register, height: 180),
+                const SizedBox(height: AppSpacing.md),
                 Text(
-                  'Rent with your phone number. You can add a national ID later to list your own equipment.',
+                  s.authRegisterSubtitle,
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 NeoField(
-                  label: 'Full name',
+                  label: s.fieldFullName,
                   hint: 'Jean Uwimana',
                   controller: _name,
                   textCapitalization: TextCapitalization.words,
@@ -107,7 +114,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 NeoField(
-                  label: 'Phone number',
+                  label: s.fieldPhone,
                   hint: '0780000000',
                   controller: _phone,
                   keyboardType: TextInputType.phone,
@@ -121,7 +128,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 NeoField(
-                  label: 'Email (optional)',
+                  label: s.fieldEmailOptional,
                   hint: 'you@example.com',
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
@@ -131,8 +138,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 NeoField(
-                  label: 'National ID (optional)',
-                  hint: '16 digits',
+                  label: s.fieldNationalIdOptional,
+                  hint: s.hintIdSixteen,
                   controller: _nationalId,
                   keyboardType: TextInputType.number,
                   prefixIcon: Icons.badge_outlined,
@@ -147,8 +154,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 NeoField(
-                  label: 'Password',
-                  hint: 'At least 6 characters',
+                  label: s.commonPassword,
+                  hint: s.hintPasswordSix,
                   controller: _password,
                   obscure: _obscure,
                   prefixIcon: Icons.lock_outline_rounded,
@@ -163,7 +170,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       size: 20,
                     ),
                     onPressed: () => setState(() => _obscure = !_obscure),
-                    tooltip: _obscure ? 'Show password' : 'Hide password',
+                    tooltip: _obscure ? s.showPassword : s.hidePassword,
                   ),
                 ),
                 if (_error != null) ...[
@@ -172,13 +179,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ],
                 const SizedBox(height: AppSpacing.lg),
                 NeoButton(
-                  label: 'Create account',
+                  label: s.authRegister,
                   loading: _busy,
                   onPressed: _busy ? null : _submit,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 NeoButton(
-                  label: 'I already have an account',
+                  label: s.authAlreadyHave,
                   variant: NeoButtonVariant.ghost,
                   onPressed: _busy ? null : () => Navigator.of(context).pop(),
                 ),

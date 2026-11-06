@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/strings.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/validators.dart';
+import '../../core/widgets/illustrations/neo_illustration.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
@@ -98,7 +100,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Future<void> _forgot() async {
     final String phone = _phone.text.trim();
     if (Validators.phone(phone) != null) {
-      setState(() => _error = 'Enter your phone number first');
+      setState(() => _error = L10n.i.authEnterPhoneFirst);
       return;
     }
     await Navigator.of(context).push<void>(
@@ -109,6 +111,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final S s = L10n.i;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -127,18 +130,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               children: [
                 const Align(
                   alignment: Alignment.centerLeft,
-                  child: BrandMark(size: 52),
+                  child: BrandMark(size: 40),
                 ),
-                const SizedBox(height: AppSpacing.xl),
-                Text('Welcome back', style: theme.textTheme.displayMedium),
+                const SizedBox(height: AppSpacing.xs),
+                const NeoIllustration(kind: IllustrationKind.signIn, height: 210),
+                const SizedBox(height: AppSpacing.md),
+                Text(s.authWelcomeBack, style: theme.textTheme.displayMedium),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Sign in to rent equipment or manage your listings.',
+                  s.authSignInSubtitle,
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 NeoField(
-                  label: 'Phone number',
+                  label: s.fieldPhone,
                   hint: '0780000000',
                   controller: _phone,
                   keyboardType: TextInputType.phone,
@@ -152,13 +157,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 NeoField(
-                  label: 'Password',
+                  label: s.commonPassword,
                   controller: _password,
                   obscure: _obscure,
                   prefixIcon: Icons.lock_outline_rounded,
                   textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _busy ? null : _submit(),
                   validator: (String? v) =>
-                      (v ?? '').isEmpty ? 'Enter your password' : null,
+                      (v ?? '').isEmpty ? L10n.i.valPasswordEmpty : null,
                   suffix: IconButton(
                     icon: Icon(
                       _obscure
@@ -167,14 +173,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       size: 20,
                     ),
                     onPressed: () => setState(() => _obscure = !_obscure),
-                    tooltip: _obscure ? 'Show password' : 'Hide password',
+                    tooltip: _obscure ? s.showPassword : s.hidePassword,
                   ),
                 ),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: _busy ? null : _forgot,
-                    child: const Text('Forgot password?'),
+                    child: Text(s.authForgot),
                   ),
                 ),
                 if (_error != null) ...[
@@ -183,13 +189,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ],
                 const SizedBox(height: AppSpacing.md),
                 NeoButton(
-                  label: 'Sign in',
+                  label: s.authSignIn,
                   loading: _busy,
                   onPressed: _busy ? null : _submit,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 NeoButton(
-                  label: 'Use a one-time code instead',
+                  label: s.authUseOtp,
                   variant: NeoButtonVariant.secondary,
                   onPressed: _busy ? null : _continueWithOtp,
                 ),
@@ -197,7 +203,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('New to Neo?', style: theme.textTheme.bodyMedium),
+                    Text(s.authNewToNeo, style: theme.textTheme.bodyMedium),
                     TextButton(
                       onPressed: _busy
                           ? null
@@ -206,7 +212,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   builder: (BuildContext _) => const RegisterPage(),
                                 ),
                               ),
-                      child: const Text('Create an account'),
+                      child: Text(s.authCreateAccount),
                     ),
                   ],
                 ),
@@ -288,20 +294,20 @@ class OtpNotice extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'We sent a 6-digit code to ${Validators.normalisePhone(phone)}',
+                  L10n.i.otpSentTo(Validators.normalisePhone(phone)),
                   style: AppTypography.bodyMedium
-                      ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
+                      .copyWith(color: Theme.of(context).colorScheme.onSurface),
                 ),
                 if (code != null) ...[
                   const SizedBox(height: AppSpacing.xs),
                   Row(
                     children: [
-                      Text('Development code: ',
+                      Text(L10n.i.otpDevCode,
                           style: AppTypography.bodySmall),
                       Text(
                         code,
                         style: AppTypography.titleMedium
-                            ?.copyWith(color: AppColors.accent),
+                            .copyWith(color: AppColors.accent),
                       ),
                     ],
                   ),
@@ -321,18 +327,19 @@ class ResendCountdown extends StatefulWidget {
     super.key,
     required this.seconds,
     required this.onResend,
-    this.label = 'Resend code',
+    this.label,
   });
 
   final int seconds;
   final VoidCallback onResend;
-  final String label;
+  final String? label;
 
   @override
   State<ResendCountdown> createState() => _ResendCountdownState();
 }
 
 class _ResendCountdownState extends State<ResendCountdown> {
+
   late int _remaining = widget.seconds;
 
   @override
@@ -358,7 +365,9 @@ class _ResendCountdownState extends State<ResendCountdown> {
     return TextButton(
       onPressed: ready ? widget.onResend : null,
       child: Text(
-        ready ? widget.label : '${widget.label} in ${_remaining}s',
+        ready
+            ? (widget.label ?? L10n.i.otpResend)
+            : '${widget.label ?? L10n.i.otpResend} · ${_remaining}s',
       ),
     );
   }

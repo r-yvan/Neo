@@ -180,17 +180,17 @@ abstract final class AppTheme {
           borderRadius: AppRadii.mdAll,
           borderSide: BorderSide(color: border),
         ),
-        focusedBorder: OutlineInputBorder(
+        focusedBorder: const OutlineInputBorder(
           borderRadius: AppRadii.mdAll,
-          borderSide: const BorderSide(color: AppColors.accent, width: 1.6),
+          borderSide: BorderSide(color: AppColors.accent, width: 1.6),
         ),
-        errorBorder: OutlineInputBorder(
+        errorBorder: const OutlineInputBorder(
           borderRadius: AppRadii.mdAll,
-          borderSide: const BorderSide(color: AppColors.danger, width: 1.3),
+          borderSide: BorderSide(color: AppColors.danger, width: 1.3),
         ),
-        focusedErrorBorder: OutlineInputBorder(
+        focusedErrorBorder: const OutlineInputBorder(
           borderRadius: AppRadii.mdAll,
-          borderSide: const BorderSide(color: AppColors.danger, width: 1.6),
+          borderSide: BorderSide(color: AppColors.danger, width: 1.6),
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
@@ -312,7 +312,7 @@ abstract final class AppTheme {
         subtitleTextStyle: text.bodySmall,
         iconColor: muted,
       ),
-      textSelectionTheme: TextSelectionThemeData(
+      textSelectionTheme: const TextSelectionThemeData(
         cursorColor: AppColors.accent,
         selectionColor: AppColors.accentSoft,
         selectionHandleColor: AppColors.accent,

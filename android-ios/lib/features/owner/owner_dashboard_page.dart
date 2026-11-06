@@ -10,9 +10,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/booking_repository.dart';
 import '../../data/repositories/users_repository.dart';
 import '../bookings/booking_detail_page.dart';
-import '../equipment/equipment_detail_page.dart';
 import '../equipment/equipment_form_page.dart';
-import '../equipment/widgets/equipment_card.dart';
 
 /// Owner control room: earnings, listings (boost control), incoming requests
 /// and MoMo withdrawals. Everything comes from the live API — no mocks.
@@ -164,7 +162,7 @@ class _OwnerDashboardPageState extends ConsumerState<OwnerDashboardPage> {
         ref.read(platformConfigProvider).valueOrNull ??
             const PlatformConfig.fallback();
     if (item.isBoosted) {
-      final bool? ok = await confirmNeo(
+      final bool ok = await confirmNeo(
         context,
         title: 'Stop the boost?',
         message:
@@ -215,7 +213,7 @@ class _OwnerDashboardPageState extends ConsumerState<OwnerDashboardPage> {
   }
 
   Future<void> _deleteListing(Equipment item) async {
-    final bool? ok = await confirmNeo(
+    final bool ok = await confirmNeo(
       context,
       title: 'Delete listing?',
       message: '"${item.title}" will disappear from search. '
@@ -354,7 +352,7 @@ class _OwnerDashboardPageState extends ConsumerState<OwnerDashboardPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                SectionHeader(
+                const SectionHeader(
                   title: 'Earnings',
                   subtitle: 'Net payouts after the platform commission.',
                 ),
@@ -436,9 +434,9 @@ class _OwnerDashboardPageState extends ConsumerState<OwnerDashboardPage> {
           ),
 
         // ------------------------------------------------------- requests
-        SliverToBoxAdapter(
+        const SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
               AppSpacing.lg,
               AppSpacing.lg,
               AppSpacing.lg,
@@ -472,9 +470,9 @@ class _OwnerDashboardPageState extends ConsumerState<OwnerDashboardPage> {
 
         // ---------------------------------------------------- withdrawals
         if (_withdrawals.isNotEmpty)
-          SliverToBoxAdapter(
+          const SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
+              padding: EdgeInsets.fromLTRB(
                 AppSpacing.lg,
                 AppSpacing.lg,
                 AppSpacing.lg,
@@ -504,7 +502,7 @@ class _OwnerDashboardPageState extends ConsumerState<OwnerDashboardPage> {
                         Container(
                           width: 40,
                           height: 40,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: AppColors.accentSoft,
                             borderRadius: AppRadii.smAll,
                           ),
@@ -880,7 +878,7 @@ class _BoostTierPicker extends StatelessWidget {
                       Container(
                         width: 40,
                         height: 40,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: AppColors.accentSoft,
                           borderRadius: AppRadii.smAll,
                         ),

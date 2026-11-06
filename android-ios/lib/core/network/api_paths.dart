@@ -110,6 +110,31 @@ abstract final class ApiPaths {
   static String dispute(String id) => '$_v1/disputes/$id';
   static String disputeRespond(String id) => '$_v1/disputes/$id/respond';
 
+  // --------------------------------------------------------------- uploads
+  static const String uploads = '$_v1/uploads';
+
+  // ----------------------------------------------------------------- admin
+  static const String adminDashboard = '$_v1/admin/dashboard';
+  static const String adminAnalytics = '$_v1/admin/analytics';
+  static const String adminUsers = '$_v1/admin/users';
+  static String adminUser(String id) => '$_v1/admin/users/$id';
+  static String adminUserVerify(String id) => '$_v1/admin/users/$id/verify';
+  static String adminUserBan(String id) => '$_v1/admin/users/$id/ban';
+  static String adminUserUnban(String id) => '$_v1/admin/users/$id/unban';
+  static const String adminEquipment = '$_v1/admin/equipment';
+  static String adminEquipmentApprove(String id) =>
+      '$_v1/admin/equipment/$id/approve';
+  static String adminEquipmentReject(String id) =>
+      '$_v1/admin/equipment/$id/reject';
+  static const String adminBookings = '$_v1/admin/bookings';
+  static const String adminTransactions = '$_v1/admin/transactions';
+  static const String adminReviews = '$_v1/admin/reviews';
+  static String adminReview(String id) => '$_v1/admin/reviews/$id';
+  static const String adminReports = '$_v1/admin/reports';
+  static String adminReport(String id) => '$_v1/admin/reports/$id';
+  static const String adminDisputes = '$_v1/admin/disputes';
+  static String adminDispute(String id) => '$_v1/admin/disputes/$id';
+
   // ---------------------------------------------------------------- system
   static const String systemHealth = '$_v1/system/health';
   static const String systemConfig = '$_v1/system/config';

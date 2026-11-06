@@ -179,8 +179,9 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
           onRefresh: _load,
           child: NotificationListener<ScrollNotification>(
             onNotification: (ScrollNotification n) {
-              if (n.metrics.pixels > n.metrics.maxScrollExtent - 400)
+              if (n.metrics.pixels > n.metrics.maxScrollExtent - 400) {
                 _loadMore();
+              }
               return false;
             },
             child: _loading && _items.isEmpty

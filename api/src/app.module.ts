@@ -15,6 +15,7 @@ import { FavoritesModule } from './favorites/favorites.module.js';
 import { ReportsModule } from './reports/reports.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { SystemModule } from './system/system.module.js';
+import { UploadsModule } from './uploads/uploads.module.js';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from './common/guards/roles.guard.js';
 
@@ -40,6 +41,7 @@ import { RolesGuard } from './common/guards/roles.guard.js';
     ReportsModule,
     AdminModule,
     SystemModule,
+    UploadsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

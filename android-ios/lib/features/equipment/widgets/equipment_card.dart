@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/l10n/strings.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
@@ -62,7 +64,7 @@ class EquipmentCard extends StatelessWidget {
                         horizontal: 8,
                         vertical: 4,
                       ),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: AppColors.accent,
                         borderRadius: AppRadii.pillAll,
                       ),
@@ -73,7 +75,7 @@ class EquipmentCard extends StatelessWidget {
                               size: 12, color: Colors.white),
                           const SizedBox(width: 2),
                           Text(
-                            'Boosted',
+                            L10n.i.badgeBoosted,
                             style: AppTypography.labelSmall
                                 .copyWith(color: Colors.white),
                           ),
@@ -118,9 +120,9 @@ class EquipmentCard extends StatelessWidget {
                           top: Radius.circular(AppRadii.lg),
                         ),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: NeoBadge(
-                          label: 'Unavailable',
+                          label: L10n.i.badgeUnavailable,
                           tone: BadgeTone.neutral,
                         ),
                       ),
@@ -266,14 +268,14 @@ class EquipmentListTile extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '${Money.format(item.pricePerDay)}/day',
+                        '${Money.format(item.pricePerDay)}${L10n.i.perDay}',
                         style: theme.textTheme.titleSmall
                             ?.copyWith(color: AppColors.accent),
                       ),
                       if (item.boostIsActive) ...[
                         const SizedBox(width: AppSpacing.xs),
-                        const NeoBadge(
-                          label: 'Boosted',
+                        NeoBadge(
+                          label: L10n.i.badgeBoosted,
                           tone: BadgeTone.accent,
                           icon: Icons.bolt_rounded,
                         ),

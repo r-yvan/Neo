@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "rw.neo.neo_equipment"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

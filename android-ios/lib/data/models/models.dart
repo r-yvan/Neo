@@ -7,6 +7,7 @@ library;
 
 import 'package:characters/characters.dart';
 import 'package:flutter/material.dart';
+import '../../core/l10n/strings.dart';
 import '../../core/utils/parsing.dart';
 
 // ------------------------------------------------------------------- users
@@ -173,19 +174,32 @@ class PublicProfile {
 // -------------------------------------------------------------- equipment
 
 enum EquipmentCategory {
-  chairs('CHAIRS', 'Chairs & Seating'),
-  tables('TABLES', 'Tables & High Tables'),
-  tents('TENTS', 'Tents & Canopies'),
-  speakers('SPEAKERS', 'Sound & Audio'),
-  lights('LIGHTS', 'Lighting & Stage FX'),
-  coolers('COOLERS', 'Coolers & Catering'),
-  generators('GENERATORS', 'Power & Generators'),
-  decorations('DECORATIONS', 'Decorations & Backdrops'),
-  other('OTHER', 'Other Event Supplies');
+  chairs('CHAIRS'),
+  tables('TABLES'),
+  tents('TENTS'),
+  speakers('SPEAKERS'),
+  lights('LIGHTS'),
+  coolers('COOLERS'),
+  generators('GENERATORS'),
+  decorations('DECORATIONS'),
+  other('OTHER');
 
-  const EquipmentCategory(this.wire, this.label);
+  const EquipmentCategory(this.wire);
   final String wire;
-  final String label;
+
+  /// Localised long display name — reads the active translation table, so a
+  /// language switch automatically relabels every screen.
+  String get label => switch (this) {
+        chairs => L10n.i.catChairsFull,
+        tables => L10n.i.catTablesFull,
+        tents => L10n.i.catTentsFull,
+        speakers => L10n.i.catSpeakersFull,
+        lights => L10n.i.catLightsFull,
+        coolers => L10n.i.catCoolersFull,
+        generators => L10n.i.catGeneratorsFull,
+        decorations => L10n.i.catDecorFull,
+        other => L10n.i.catOtherFull,
+      };
 
   static EquipmentCategory fromWire(String? value) =>
       EquipmentCategory.values.firstWhere(
@@ -399,18 +413,36 @@ class AvailabilityDay {
 // --------------------------------------------------------------- bookings
 
 enum BookingStatus {
-  pending('PENDING', 'Pending', 'Waiting for the owner to respond'),
-  accepted('ACCEPTED', 'Accepted', 'Confirmed — arrange the handover'),
-  rejected('REJECTED', 'Rejected', 'The owner declined this request'),
-  cancelled('CANCELLED', 'Cancelled', 'This booking was cancelled'),
-  ongoing('ONGOING', 'Ongoing', 'The rental is in progress'),
-  completed('COMPLETED', 'Completed', 'Rental finished'),
-  disputed('DISPUTED', 'Disputed', 'Under dispute review');
+  pending('PENDING'),
+  accepted('ACCEPTED'),
+  rejected('REJECTED'),
+  cancelled('CANCELLED'),
+  ongoing('ONGOING'),
+  completed('COMPLETED'),
+  disputed('DISPUTED');
 
-  const BookingStatus(this.wire, this.label, this.hint);
+  const BookingStatus(this.wire);
   final String wire;
-  final String label;
-  final String hint;
+
+  String get label => switch (this) {
+        pending => L10n.i.statusPending,
+        accepted => L10n.i.statusAccepted,
+        rejected => L10n.i.statusRejected,
+        cancelled => L10n.i.statusCancelled,
+        ongoing => L10n.i.statusOngoing,
+        completed => L10n.i.statusCompleted,
+        disputed => L10n.i.statusDisputed,
+      };
+
+  String get hint => switch (this) {
+        pending => L10n.i.hintPending,
+        accepted => L10n.i.hintAccepted,
+        rejected => L10n.i.hintRejected,
+        cancelled => L10n.i.hintCancelled,
+        ongoing => L10n.i.hintOngoing,
+        completed => L10n.i.hintCompleted,
+        disputed => L10n.i.hintDisputed,
+      };
 
   static BookingStatus fromWire(String? value) =>
       BookingStatus.values.firstWhere((BookingStatus s) => s.wire == value,
@@ -423,14 +455,20 @@ enum BookingStatus {
 }
 
 enum PaymentStatus {
-  pending('PENDING', 'Pending'),
-  paid('PAID', 'Paid'),
-  refunded('REFUNDED', 'Refunded'),
-  failed('FAILED', 'Failed');
+  pending('PENDING'),
+  paid('PAID'),
+  refunded('REFUNDED'),
+  failed('FAILED');
 
-  const PaymentStatus(this.wire, this.label);
+  const PaymentStatus(this.wire);
   final String wire;
-  final String label;
+
+  String get label => switch (this) {
+        pending => L10n.i.paymentPending,
+        paid => L10n.i.paymentPaid,
+        refunded => L10n.i.paymentRefunded,
+        failed => L10n.i.paymentFailed,
+      };
 
   static PaymentStatus fromWire(String? value) =>
       PaymentStatus.values.firstWhere((PaymentStatus s) => s.wire == value,
@@ -456,6 +494,8 @@ class Booking {
     this.renter,
     this.owner,
     this.createdAt,
+    this.disputeId,
+    this.disputeStatus,
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
@@ -483,6 +523,8 @@ class Booking {
       owner:
           json['owner'] == null ? null : UserRef.fromJson(asMap(json['owner'])),
       createdAt: asDateOrNull(json['createdAt']),
+      disputeId: asStringOrNull(asMap(json['dispute'])['id']),
+      disputeStatus: asStringOrNull(asMap(json['dispute'])['status']),
     );
   }
 
@@ -503,6 +545,10 @@ class Booking {
   final UserRef? renter;
   final UserRef? owner;
   final DateTime? createdAt;
+
+  /// Present once either party has opened a dispute on this booking.
+  final String? disputeId;
+  final String? disputeStatus;
 
   /// Mirrors `BookingsService.rentalDays`: inclusive day count, minimum 1.
   int get days {
@@ -546,6 +592,8 @@ class Booking {
         renter: renter,
         owner: owner,
         createdAt: createdAt,
+        disputeId: disputeId,
+        disputeStatus: disputeStatus,
       );
 }
 
@@ -626,16 +674,27 @@ class PaymentIntent {
 }
 
 enum TransactionType {
-  commission('COMMISSION', 'Platform commission'),
-  payout('PAYOUT', 'Rental payout'),
-  boost('BOOST', 'Listing boost'),
-  rental('RENTAL', 'Rental payment'),
-  withdrawal('WITHDRAWAL', 'Withdrawal'),
-  refund('REFUND', 'Refund');
+  commission('COMMISSION'),
+  payout('PAYOUT'),
+  boost('BOOST'),
+  rental('RENTAL'),
+  withdrawal('WITHDRAWAL'),
+  refund('REFUND');
 
-  const TransactionType(this.wire, this.label);
+  const TransactionType(this.wire);
   final String wire;
-  final String label;
+
+  String get label => switch (this) {
+        commission => L10n.i.txCommission,
+        payout => L10n.i.txPayout,
+        boost => L10n.i.txBoost,
+        rental => L10n.i.txRental,
+        withdrawal => L10n.i.txWithdrawal,
+        refund => L10n.i.txRefund,
+      };
+
+  /// Money arriving to the current user (vs. leaving).
+  bool get isIncoming => this == payout || this == refund;
 
   static TransactionType fromWire(String? value) =>
       TransactionType.values.firstWhere((TransactionType t) => t.wire == value,
@@ -654,6 +713,7 @@ class Transaction {
     this.providerRef,
     this.createdAt,
     this.booking,
+    this.metaTitle,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
@@ -669,6 +729,7 @@ class Transaction {
         booking: json['booking'] == null
             ? null
             : _TransactionBooking.fromJson(asMap(json['booking'])),
+        metaTitle: asStringOrNull(asMap(json['metadata'])['equipmentTitle']),
       );
 
   final String id;
@@ -681,6 +742,10 @@ class Transaction {
   final PaymentStatus status;
   final DateTime? createdAt;
   final _TransactionBooking? booking;
+  final String? metaTitle;
+
+  /// Listing the money relates to, when known.
+  String? get equipmentTitle => metaTitle ?? booking?.equipmentTitle;
 }
 
 class _TransactionBooking {
@@ -775,18 +840,24 @@ class Payout {
   final DateTime? createdAt;
   final _TransactionBooking? booking;
 
-  String get title => booking?.equipmentTitle ?? 'Rental payout';
+  String get title => booking?.equipmentTitle ?? L10n.i.rentalPayout;
 }
 
 enum WithdrawalStatus {
-  pending('PENDING', 'Pending'),
-  approved('APPROVED', 'Approved'),
-  rejected('REJECTED', 'Rejected'),
-  completed('COMPLETED', 'Completed');
+  pending('PENDING'),
+  approved('APPROVED'),
+  rejected('REJECTED'),
+  completed('COMPLETED');
 
-  const WithdrawalStatus(this.wire, this.label);
+  const WithdrawalStatus(this.wire);
   final String wire;
-  final String label;
+
+  String get label => switch (this) {
+        pending => L10n.i.statusPending,
+        approved => L10n.i.statusAccepted,
+        rejected => L10n.i.statusRejected,
+        completed => L10n.i.statusCompleted,
+      };
 
   static WithdrawalStatus fromWire(String? value) => WithdrawalStatus.values
       .firstWhere((WithdrawalStatus s) => s.wire == value,
@@ -1105,6 +1176,10 @@ class Dispute {
     this.resolution,
     this.createdAt,
     this.bookingEquipmentTitle,
+    this.openedById,
+    this.openedByName,
+    this.bookingEquipmentId,
+    this.updatedAt,
   });
 
   factory Dispute.fromJson(Map<String, dynamic> json) {
@@ -1119,6 +1194,10 @@ class Dispute {
       status: asString(json['status'], 'OPEN'),
       createdAt: asDateOrNull(json['createdAt']),
       bookingEquipmentTitle: asStringOrNull(equipment['title']),
+      bookingEquipmentId: asStringOrNull(equipment['id']),
+      openedById: asStringOrNull(json['openedById']),
+      openedByName: asStringOrNull(asMap(json['openedBy'])['fullName']),
+      updatedAt: asDateOrNull(json['updatedAt']),
     );
   }
 
@@ -1130,6 +1209,13 @@ class Dispute {
   final String status;
   final DateTime? createdAt;
   final String? bookingEquipmentTitle;
+  final String? bookingEquipmentId;
+  final String? openedById;
+  final String? openedByName;
+  final DateTime? updatedAt;
+
+  bool get isOpen => status == 'OPEN';
+  bool get isDecided => status == 'RESOLVED' || status == 'CLOSED';
 }
 
 // ---------------------------------------------------------------- system

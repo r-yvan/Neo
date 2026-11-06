@@ -224,7 +224,7 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                           fontWeight: AppFontWeight.semiBold,
                         ),
                         markersMaxCount: 1,
-                        markerDecoration: BoxDecoration(
+                        markerDecoration: const BoxDecoration(
                           color: AppColors.danger,
                           shape: BoxShape.circle,
                         ),
@@ -292,7 +292,7 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                   Text('Blocked dates', style: theme.textTheme.titleMedium),
                   const SizedBox(height: AppSpacing.xs),
                   if (_blocked.isEmpty)
-                    NeoEmptyState(
+                    const NeoEmptyState(
                       compact: true,
                       icon: Icons.event_available_rounded,
                       title: 'Nothing blocked',

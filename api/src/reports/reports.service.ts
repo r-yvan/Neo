@@ -92,6 +92,15 @@ export class ReportsService {
         where: { id: dto.bookingId },
         data: { status: BookingStatus.DISPUTED },
       }),
+      // Keep the booking's status history complete.
+      this.prisma.bookingTimeline.create({
+        data: {
+          bookingId: dto.bookingId,
+          status: BookingStatus.DISPUTED,
+          actorId: userId,
+          note: 'Dispute opened',
+        },
+      }),
     ]);
 
     return dispute;

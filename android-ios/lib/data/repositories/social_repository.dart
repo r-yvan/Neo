@@ -165,6 +165,8 @@ class NotificationsRepository {
 
   final Future<dynamic> Function(String path,
       {Map<String, dynamic>? query, bool skipAuth}) _get;
+  // Kept for symmetry with the other repositories; no POST route exists yet.
+  // ignore: unused_field
   final Future<dynamic> Function(String path, {Object? body}) _post;
   final Future<dynamic> Function(String path, {Object? body}) _patch;
   final Future<dynamic> Function(String path, {Object? body}) _delete;
@@ -210,13 +212,6 @@ class NotificationsRepository {
       )));
 }
 
-PaginatedList<AppNotification> _page(dynamic res) {
-  final Map<String, dynamic> map = asMap(res);
-  return PaginatedList<AppNotification>(
-    items: asMapList(map['data']).map(AppNotification.fromJson).toList(),
-    meta: asMap(map['meta']),
-  );
-}
 
 class ChatRepository {
   ChatRepository(this._get, this._post, this._patch, this._delete);

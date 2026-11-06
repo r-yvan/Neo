@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/strings.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/validators.dart';
+import '../../core/widgets/illustrations/neo_illustration.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/providers.dart';
 import 'login_page.dart' show NeoErrorBanner;
@@ -51,7 +53,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         MaterialPageRoute<void>(
           builder: (BuildContext _) => OtpPage(
             phone: _phone.text.trim(),
-            title: 'Reset your password',
+            title: L10n.i.forgotTitle,
             subtitle: message,
             onVerify: _applyReset,
           ),
@@ -76,7 +78,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     // The backend revokes every refresh token on reset.
     await ref.read(tokenStoreProvider).clear();
     if (mounted) {
-      showNeoSnack(context, 'Password updated. Please sign in.');
+      showNeoSnack(context, L10n.i.forgotChangedSnack);
       Navigator.of(context).popUntil((Route<void> route) => route.isFirst);
     }
   }
@@ -87,12 +89,13 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final S s = L10n.i;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: true,
-        title: Text('Reset password', style: theme.textTheme.titleLarge),
+        title: Text(s.forgotAppbarTitle, style: theme.textTheme.titleLarge),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -102,13 +105,15 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const NeoIllustration(kind: IllustrationKind.reset, height: 190),
+                const SizedBox(height: AppSpacing.md),
                 Text(
-                  'Enter the phone number on your account and we will send a code to reset your password.',
+                  s.forgotScreenIntro,
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 NeoField(
-                  label: 'Phone number',
+                  label: s.fieldPhone,
                   hint: '0780000000',
                   controller: _phone,
                   keyboardType: TextInputType.phone,
@@ -122,8 +127,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 NeoField(
-                  label: 'New password',
-                  hint: 'Choose a new password',
+                  label: s.fieldNewPasswordShort,
+                  hint: s.forgotNewPasswordHint,
                   obscure: true,
                   onChanged: (String v) => _newPassword = v,
                   validator: Validators.password,
@@ -138,7 +143,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                 ],
                 const SizedBox(height: AppSpacing.lg),
                 NeoButton(
-                  label: 'Send reset code',
+                  label: s.forgotSendCta,
                   loading: _busy,
                   onPressed: _busy ? null : _send,
                 ),

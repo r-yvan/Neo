@@ -16,9 +16,11 @@ import '../core/storage/app_preferences.dart';
 import '../core/storage/token_store.dart';
 import '../core/utils/formatters.dart';
 import 'models/models.dart';
+import 'repositories/admin_repository.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/booking_repository.dart';
 import 'repositories/equipment_repository.dart';
+import 'repositories/media_repository.dart';
 import 'repositories/social_repository.dart';
 import 'repositories/users_repository.dart';
 
@@ -163,6 +165,23 @@ final Provider<SystemRepository> systemRepositoryProvider =
   return SystemRepository(
     (String path, {Map<String, dynamic>? query, bool skipAuth = false}) =>
         c.get(path, query: query, skipAuth: skipAuth),
+  );
+});
+
+final Provider<MediaRepository> mediaRepositoryProvider =
+    Provider<MediaRepository>((Ref ref) {
+  final ApiClient c = ref.watch(apiClientProvider);
+  return MediaRepository(c.upload);
+});
+
+final Provider<AdminRepository> adminRepositoryProvider =
+    Provider<AdminRepository>((Ref ref) {
+  final ApiClient c = ref.watch(apiClientProvider);
+  return AdminRepository(
+    (String path, {Map<String, dynamic>? query, bool skipAuth = false}) =>
+        c.get(path, query: query, skipAuth: skipAuth),
+    (String path, {Object? body}) => c.patch(path, body: body),
+    (String path, {Object? body}) => c.delete(path, body: body),
   );
 });
 
@@ -354,9 +373,9 @@ class SessionNotifier extends Notifier<SessionState> {
 
   Future<void> _handleExpiry() async {
     if (state.stage == SessionStage.signedOut) return;
-    state = const SessionState(
+    state = SessionState(
       stage: SessionStage.signedOut,
-      error: 'Your session expired. Please sign in again.',
+      error: L10n.i.sessionExpired,
     );
   }
 }

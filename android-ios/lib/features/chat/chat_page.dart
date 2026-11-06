@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/app_config.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
@@ -110,7 +109,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   }
 
   Future<void> _deleteMessage(Message message) async {
-    final bool? ok = await confirmNeo(
+    final bool ok = await confirmNeo(
       context,
       title: 'Delete message?',
       message: 'This removes the message for both of you.',
@@ -343,7 +342,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                 hintText: 'Write a message…',
                 filled: true,
                 fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
-                border: OutlineInputBorder(
+                border: const OutlineInputBorder(
                   borderRadius: AppRadii.pillAll,
                   borderSide: BorderSide.none,
                 ),

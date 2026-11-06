@@ -62,7 +62,12 @@ class _NeoAppState extends ConsumerState<NeoApp> {
               maxScaleFactor: 1.3,
             ),
           ),
-          child: child ?? const SizedBox.shrink(),
+          // Tapping outside a text field dismisses the keyboard everywhere.
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
     );

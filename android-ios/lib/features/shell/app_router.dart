@@ -40,7 +40,11 @@ class AppRouter {
           return location == '/login' ? null : '/login';
         case SessionStage.signedIn:
         case SessionStage.restricted:
-          return atRoot ? '/home' : null;
+          // Leave the auth/onboarding flow as soon as a session exists.
+          final bool inAuthFlow = atRoot ||
+              location == '/login' ||
+              location == '/onboarding';
+          return inAuthFlow ? '/home' : null;
       }
     },
     routes: <RouteBase>[

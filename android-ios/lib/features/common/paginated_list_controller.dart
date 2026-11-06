@@ -1,9 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../core/utils/parsing.dart';
-import '../../../data/repositories/equipment_repository.dart';
 import '../../../data/repositories/users_repository.dart';
 
 /// A page-backed list with explicit loading / error / end-of-data states.

@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_typography.dart';
 import '../../core/widgets/neo_widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
@@ -50,13 +52,35 @@ class _RootShellState extends ConsumerState<RootShell> {
   late int _index = widget.initialTab;
   final Map<int, int> _badgeCounts = <int, int>{};
 
+  Timer? _badgeTimer;
+
   @override
   void initState() {
     super.initState();
-    // Mirror provider state into local state so the AnimatedSwitcher and the
-    // NavigationBar stay in sync.
-    _index = ref.read(shellTabProvider);
     _index = widget.initialTab;
+    // Keep the provider in sync so deep actions start from the right tab.
+    Future<void>.microtask(
+        () => ref.read(shellTabProvider.notifier).state = _index);
+    _refreshBadges();
+    _badgeTimer =
+        Timer.periodic(AppConfig.badgePollInterval, (_) => _refreshBadges());
+  }
+
+  @override
+  void dispose() {
+    _badgeTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Unread chat count for the Messages tab. Failures are silent — a badge
+  /// is a hint, never a blocker.
+  Future<void> _refreshBadges() async {
+    try {
+      final int unread = await ref.read(chatRepositoryProvider).unreadCount();
+      if (mounted && _badgeCounts[ShellTab.messages] != unread) {
+        setState(() => _badgeCounts[ShellTab.messages] = unread);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -76,7 +100,7 @@ class _RootShellState extends ConsumerState<RootShell> {
       hasOwnerRole
           ? const OwnerDashboardPage()
           : const BecomeOwnerPrompt(),
-      ProfilePage(embedded: true),
+      const ProfilePage(embedded: true),
     ];
 
     return Scaffold(
@@ -86,6 +110,7 @@ class _RootShellState extends ConsumerState<RootShell> {
         index: _index,
         onSelected: (int i) {
           setState(() => _index = i);
+          if (i == ShellTab.messages) _refreshBadges();
           ref.read(shellTabProvider.notifier).state = i;
         },
         badges: _badgeCounts,
@@ -289,7 +314,7 @@ class _Benefit extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.accentSoft,
                 borderRadius: AppRadii.smAll,
               ),

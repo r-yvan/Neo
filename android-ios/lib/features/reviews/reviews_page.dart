@@ -10,7 +10,6 @@ import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/social_repository.dart' show ReviewsRepository;
 import '../../data/repositories/users_repository.dart' show PaginatedList;
-import '../profile/public_profile_page.dart';
 
 /// Review list. Used for a listing (`?equipmentId=`), a person (`?userId=`)
 /// or the signed-in user's own reviews (`mine: true`).
@@ -106,9 +105,10 @@ class _ReviewsPageState extends ConsumerState<ReviewsPage> {
         () => _items = _items.where((Review r) => r.id != review.id).toList());
     try {
       await ref.read(reviewsRepositoryProvider).delete(review.id);
-      if (mounted)
+      if (mounted) {
         showNeoSnack(context, 'Review deleted',
             icon: Icons.delete_outline_rounded);
+      }
     } on ApiException catch (e) {
       if (mounted) {
         showNeoSnack(context, e.message, isError: true);
@@ -133,8 +133,9 @@ class _ReviewsPageState extends ConsumerState<ReviewsPage> {
           onRefresh: _load,
           child: NotificationListener<ScrollNotification>(
             onNotification: (ScrollNotification n) {
-              if (n.metrics.pixels > n.metrics.maxScrollExtent - 400)
+              if (n.metrics.pixels > n.metrics.maxScrollExtent - 400) {
                 _loadMore();
+              }
               return false;
             },
             child: _loading && _items.isEmpty
@@ -260,7 +261,7 @@ class _ReviewCard extends ConsumerWidget {
                         review.bookingEndDate!,
                       ),
                       style: AppTypography.labelSmall
-                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          .copyWith(color: theme.colorScheme.onSurfaceVariant),
                     ),
                 ],
               ),

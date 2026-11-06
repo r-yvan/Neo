@@ -151,7 +151,7 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.accentSoft,
                 borderRadius: AppRadii.smAll,
               ),
